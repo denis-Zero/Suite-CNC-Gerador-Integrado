@@ -1,0 +1,3160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suíte CNC - Gerador Integrado G-Code CNC Real</title>
+    <style>
+        :root {
+            --bg-color: #181825;
+            --card-bg: #2b2b3b;
+            --accent: #00adb5;
+            --accent-hover: #008c93;
+            --text-color: #eeeeee;
+            --border-color: #3f3f5a;
+            --danger: #ff5555;
+            --warning: #ffb86c;
+            --success: #a6e3a1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header-app {
+            width: 100%;
+            max-width: 1300px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .header-app h1 {
+            margin: 0;
+            color: var(--accent);
+            font-size: 1.5rem;
+        }
+
+        .tabs-nav {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background-color: #313244;
+            color: #ccc;
+            border: 1px solid var(--border-color);
+            padding: 9px 12px;
+            border-radius: 6px 6px 0 0;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.82rem;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            background-color: #45475a;
+            color: #fff;
+        }
+
+        .tab-btn.active {
+            background-color: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1300px;
+            display: grid;
+            grid-template-columns: 480px 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: var(--accent);
+            font-size: 1.05rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 4px;
+            margin-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .row-inputs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .row-inputs .form-group {
+            flex: 1;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: #181825;
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        label {
+            font-size: 0.8rem;
+            margin-bottom: 3px;
+            color: #b0b0c0;
+        }
+
+        input, select, textarea.input-txt {
+            background-color: #181825;
+            border: 1px solid var(--border-color);
+            color: #fff;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 0.88rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea.input-txt:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .status-box {
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.82rem;
+            margin-bottom: 12px;
+            font-weight: bold;
+        }
+
+        .status-box.ok {
+            background-color: #1e3a29;
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .status-box.error {
+            background-color: #3d1a24;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        .status-box.warning {
+            background-color: #3d311a;
+            color: var(--warning);
+            border: 1px solid var(--warning);
+        }
+
+        button.btn-generate {
+            background-color: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.2s;
+            width: 100%;
+            font-size: 0.95rem;
+        }
+
+        button.btn-generate:hover {
+            background-color: var(--accent-hover);
+        }
+
+        button.btn-secondary {
+            background-color: #313244;
+            color: #fff;
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+            font-size: 0.85rem;
+            margin-top: 4px;
+        }
+
+        button.btn-secondary:hover {
+            background-color: #45475a;
+        }
+
+        .table-furos {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.78rem;
+        }
+
+        .table-furos th, .table-furos td {
+            border: 1px solid var(--border-color);
+            padding: 5px;
+            text-align: center;
+        }
+
+        .table-furos th {
+            background-color: #181825;
+            color: var(--accent);
+        }
+
+        .btn-del {
+            background-color: var(--danger);
+            color: #fff;
+            border: none;
+            border-radius: 3px;
+            padding: 2px 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+
+        .output-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- SIMULADOR 3D/2D E PAINEL DE ANIMAÇÃO --- */
+        .sim-wrapper {
+            background-color: #11111b;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sim-header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .sim-title {
+            margin: 0;
+            font-size: 0.95rem;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .sim-mode-toggle {
+            display: flex;
+            gap: 4px;
+        }
+
+        .sim-toggle-btn {
+            background-color: #181825;
+            border: 1px solid var(--border-color);
+            color: #ccc;
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .sim-toggle-btn.active {
+            background-color: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        canvas.sim-canvas {
+            background-color: #0b0b12;
+            border: 1px solid #28283d;
+            border-radius: 4px;
+            width: 100%;
+            height: 280px;
+            box-sizing: border-box;
+        }
+
+        .sim-controls-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+            background-color: #181825;
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-sim-control {
+            background-color: #313244;
+            color: #fff;
+            border: 1px solid var(--border-color);
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+
+        .btn-sim-control:hover {
+            background-color: #45475a;
+        }
+
+        .sim-progress-slider {
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .sim-speed-select {
+            background-color: #11111b;
+            color: #fff;
+            border: 1px solid var(--border-color);
+            font-size: 0.75rem;
+            padding: 3px 6px;
+            border-radius: 4px;
+        }
+
+        .sim-legenda {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 8px;
+            background-color: #181825;
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            font-size: 0.72rem;
+        }
+
+        .legenda-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legenda-box {
+            width: 100px;
+            height: 10px;
+            border-radius: 2px;
+        }
+
+        textarea.gcode-area {
+            width: 100%;
+            height: 350px;
+            background-color: #11111b;
+            color: #a6e3a1;
+            font-family: 'Courier New', Courier, monospace;
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 4px;
+            resize: vertical;
+            box-sizing: border-box;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .actions-bar {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            align-self: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .btn-action {
+            background-color: #313244;
+            color: #fff;
+            border: 1px solid var(--border-color);
+            padding: 10px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+            font-size: 0.88rem;
+        }
+
+        .btn-action:hover:not(:disabled) {
+            background-color: #45475a;
+        }
+
+        .btn-action:disabled {
+            background-color: #21222c;
+            color: #555566;
+            border: 1px solid #333344;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* --- ESTILOS DA CALCULADORA MODAL FLUTUANTE --- */
+        .calc-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            top: 80px;
+            left: calc(50% - 160px);
+            width: 320px;
+            background-color: #1e1e2e;
+            border: 2px solid var(--accent);
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            overflow: hidden;
+        }
+
+        .calc-header {
+            background-color: var(--accent);
+            color: #fff;
+            padding: 10px 15px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: move;
+            user-select: none;
+        }
+
+        .calc-header span.calc-title {
+            font-size: 0.95rem;
+        }
+
+        .btn-close-calc {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.2rem;
+            cursor: pointer;
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        .calc-body {
+            padding: 15px;
+        }
+
+        .calc-display {
+            width: 100%;
+            height: 45px;
+            background-color: #11111b;
+            color: #a6e3a1;
+            font-family: 'Courier New', Courier, monospace;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            text-align: right;
+            padding: 8px 12px;
+            font-size: 1.2rem;
+            box-sizing: border-box;
+            margin-bottom: 12px;
+        }
+
+        .calc-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+        }
+
+        .calc-btn {
+            background-color: #313244;
+            color: #fff;
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            font-size: 0.9rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.15s;
+        }
+
+        .calc-btn:hover {
+            background-color: #45475a;
+        }
+
+        .calc-btn.operator {
+            background-color: #f5e0dc;
+            color: #11111b;
+        }
+
+        .calc-btn.operator:hover {
+            background-color: #f2cdcd;
+        }
+
+        .calc-btn.func {
+            background-color: #89b4fa;
+            color: #11111b;
+        }
+
+        .calc-btn.func:hover {
+            background-color: #74c7ec;
+        }
+
+        .calc-btn.equals {
+            background-color: var(--accent);
+            color: #fff;
+            grid-column: span 2;
+        }
+
+        .calc-btn.equals:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .calc-btn.clear {
+            background-color: var(--danger);
+            color: #fff;
+        }
+
+        @media (max-width: 950px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            .header-app {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header-app">
+    <h1>Suíte CNC - Gerador Integrado CNC Real</h1>
+    <div class="tabs-nav">
+        <button class="tab-btn active" onclick="abrirAba('aba-combinado', this)">★ Multi-Operações</button>
+        <button class="tab-btn" onclick="abrirAba('aba-faceamento', this)">1. Faceamento</button>
+        <button class="tab-btn" onclick="abrirAba('aba-contorno', this)">2. Contorno</button>
+        <button class="tab-btn" onclick="abrirAba('aba-matriz', this)">3. Matriz Ilhas</button>
+        <button class="tab-btn" onclick="abrirAba('aba-lista-furos', this)">4. Lista / Padrões Furos</button>
+        <button class="tab-btn" onclick="abrirAba('aba-cavidade', this)">5. Cavidades c/ Alívio</button>
+    </div>
+</div>
+
+<div class="container">
+    <!-- PAINEL DE CONFIGURAÇÕES -->
+    <div class="panel">
+
+        <!-- ABA COMPLETA: MULTI-OPERAÇÕES -->
+        <div id="aba-combinado" class="tab-content active">
+            <h2>Seleção de Operações do Programa Único</h2>
+            <div class="checkbox-group">
+                <input type="checkbox" id="chk_faceamento" checked>
+                <label for="chk_faceamento" style="margin:0; cursor:pointer; color:#fff; font-weight:bold;">1. Incluir Operação de Faceamento</label>
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="chk_contorno" checked>
+                <label for="chk_contorno" style="margin:0; cursor:pointer; color:#fff; font-weight:bold;">2. Incluir Operação de Contorno Externo</label>
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="chk_matriz" checked>
+                <label for="chk_matriz" style="margin:0; cursor:pointer; color:#fff; font-weight:bold;">3. Incluir Operação de Matriz de Ilhas</label>
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="chk_lista_furos" checked>
+                <label for="chk_lista_furos" style="margin:0; cursor:pointer; color:#fff; font-weight:bold;">4. Incluir Furações com Brocas Específicas</label>
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="chk_cavidade" checked>
+                <label for="chk_cavidade" style="margin:0; cursor:pointer; color:#fff; font-weight:bold;">5. Incluir Usinagem de Cavidade(s) Reta(s)</label>
+            </div>
+
+            <h2>Parâmetros Gerais do Bruto</h2>
+            <div class="form-group">
+                <label for="multi_zeroPeca">Zero Peça:</label>
+                <select id="multi_zeroPeca">
+                    <option value="G54" selected>G54 (Centro do Bruto)</option>
+                    <option value="G55">G55 (Centro do Bruto)</option>
+                    <option value="G56">G56 (Centro do Bruto)</option>
+                    <option value="G57">G57 (Centro do Bruto)</option>
+                    <option value="G58">G58 (Centro do Bruto)</option>
+                    <option value="G59">G59 (Centro do Bruto)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="multi_brutoX">Comprimento do Bruto X (mm):</label>
+                <input type="number" id="multi_brutoX" value="250.0" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="multi_brutoY">Largura do Bruto Y (mm):</label>
+                <input type="number" id="multi_brutoY" value="250.0" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="multi_brutoZ">Espessura do Bruto Z (mm):</label>
+                <input type="number" id="multi_brutoZ" value="50.0" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="multi_oleo">Refrigeração / Óleo:</label>
+                <select id="multi_oleo">
+                    <option value="/M8" selected>Com Óleo (/M8)</option>
+                    <option value="M9">Sem Óleo (M9)</option>
+                </select>
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="multi_useM01" checked>
+                <label for="multi_useM01" style="margin:0; cursor:pointer; color:#fff; font-weight:bold;">Inserir M01 (Parada Opcional) Antes das Trocas</label>
+            </div>
+
+            <button class="btn-generate" onclick="gerarProgramaCombinado()">Gerar Programa Único Combinado</button>
+        </div>
+
+        <!-- ABA 1: FACEAMENTO -->
+        <div id="aba-faceamento" class="tab-content">
+            <h2>Faceamento Individual</h2>
+            <div class="form-group">
+                <label for="f_zeroPeca">Zero Peça:</label>
+                <select id="f_zeroPeca">
+                    <option value="G54" selected>G54</option>
+                    <option value="G55">G55</option>
+                    <option value="G56">G56</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="f_compX">Comprimento em X (mm):</label>
+                <input type="number" id="f_compX" value="250.0" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="f_largY">Largura em Y (mm):</label>
+                <input type="number" id="f_largY" value="250.0" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="f_numT">Ferramenta (T):</label>
+                <input type="number" id="f_numT" value="1">
+            </div>
+            <div class="form-group">
+                <label for="f_diam">Diâmetro (mm):</label>
+                <input type="number" id="f_diam" value="70" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="f_rpm">RPM:</label>
+                <input type="number" id="f_rpm" value="660">
+            </div>
+            <div class="form-group">
+                <label for="f_avanco">Avanço (mm/min):</label>
+                <input type="number" id="f_avanco" value="600">
+            </div>
+            <div class="form-group">
+                <label for="f_zAprox">Z Aproximação / Segurança (mm):</label>
+                <input type="number" id="f_zAprox" value="5.0" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="f_zInicial">Z Inicial (mm):</label>
+                <input type="number" id="f_zInicial" value="0.0" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="f_zPasse">Passe por Camada (mm):</label>
+                <input type="number" id="f_zPasse" value="0.5" step="0.05">
+            </div>
+            <div class="form-group">
+                <label for="f_zFinal">Z Final (mm):</label>
+                <input type="number" id="f_zFinal" value="-1.0" step="0.1">
+            </div>
+            <button class="btn-generate" onclick="gerarFaceamento()">Gerar Apenas Faceamento</button>
+        </div>
+
+        <!-- ABA 2: CONTORNO -->
+        <div id="aba-contorno" class="tab-content">
+            <h2>Contorno Individual (Desbaste)</h2>
+            <div class="form-group">
+                <label for="c_zeroPeca">Zero Peça:</label>
+                <select id="c_zeroPeca">
+                    <option value="G54" selected>G54</option>
+                    <option value="G55">G55</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="c_compX">Comprimento em X (mm):</label>
+                <input type="number" id="c_compX" value="250.0" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="c_largY">Largura em Y (mm):</label>
+                <input type="number" id="c_largY" value="250.0" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="c_numTDesb">Ferramenta Desbaste (T):</label>
+                <input type="number" id="c_numTDesb" value="18">
+            </div>
+            <div class="form-group">
+                <label for="c_diamDesb">Diâmetro Desbaste (mm):</label>
+                <input type="number" id="c_diamDesb" value="32" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="c_rpmDesb">RPM Desbaste:</label>
+                <input type="number" id="c_rpmDesb" value="2200">
+            </div>
+            <div class="form-group">
+                <label for="c_avancoDesb">Avanço Desbaste (mm/min):</label>
+                <input type="number" id="c_avancoDesb" value="800">
+            </div>
+            <div class="form-group">
+                <label for="c_sobremetal">Sobremetal X/Y (mm):</label>
+                <input type="number" id="c_sobremetal" value="0.3" step="0.05">
+            </div>
+
+            <h2>Acabamento do Contorno (Opcional)</h2>
+            <div class="form-group">
+                <label for="c_execAcab">Executar Acabamento?</label>
+                <select id="c_execAcab" onchange="alternarAcabamentoContorno()">
+                    <option value="SIM" selected>Sim</option>
+                    <option value="NAO">Não</option>
+                </select>
+            </div>
+            <div id="blocoAcabamentoContorno">
+                <div class="form-group">
+                    <label for="c_numTAcab">Ferramenta Acabamento (T):</label>
+                    <input type="number" id="c_numTAcab" value="16">
+                </div>
+                <div class="form-group">
+                    <label for="c_diamAcab">Diâmetro Acabamento (mm):</label>
+                    <input type="number" id="c_diamAcab" value="20" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="c_rpmAcab">RPM Acabamento:</label>
+                    <input type="number" id="c_rpmAcab" value="3200">
+                </div>
+                <div class="form-group">
+                    <label for="c_avancoAcab">Avanço Acabamento (mm/min):</label>
+                    <input type="number" id="c_avancoAcab" value="1200">
+                </div>
+            </div>
+
+            <h2>Profundidades do Contorno</h2>
+            <div class="form-group">
+                <label for="c_zAprox">Z Aproximação / Segurança (mm):</label>
+                <input type="number" id="c_zAprox" value="5.0" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="c_zInicial">Z Inicial (mm):</label>
+                <input type="number" id="c_zInicial" value="0.0" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="c_zPasse">Passe por Volta (mm):</label>
+                <input type="number" id="c_zPasse" value="1.0" step="0.05">
+            </div>
+            <div class="form-group">
+                <label for="c_zFinal">Z Final (mm):</label>
+                <input type="number" id="c_zFinal" value="12.0" step="0.1">
+            </div>
+            <button class="btn-generate" onclick="gerarContornoRampa()">Gerar Apenas Contorno</button>
+        </div>
+
+        <!-- ABA 3: MATRIZ -->
+        <div id="aba-matriz" class="tab-content">
+            <h2>Matriz de Ilhas Individual</h2>
+            <div class="form-group">
+                <label for="m_brutoX">Bruto X (mm):</label>
+                <input type="number" id="m_brutoX" value="250.0" oninput="validarMatriz()">
+            </div>
+            <div class="form-group">
+                <label for="m_brutoY">Bruto Y (mm):</label>
+                <input type="number" id="m_brutoY" value="250.0" oninput="validarMatriz()">
+            </div>
+            <div class="form-group">
+                <label for="m_colunas">Colunas (X):</label>
+                <input type="number" id="m_colunas" value="4" min="1" oninput="validarMatriz()">
+            </div>
+            <div class="form-group">
+                <label for="m_linhas">Linhas (Y):</label>
+                <input type="number" id="m_linhas" value="4" min="1" oninput="validarMatriz()">
+            </div>
+            <div class="form-group">
+                <label for="m_tamX">Tamanho Ilha X (mm):</label>
+                <input type="number" id="m_tamX" value="40.0" oninput="validarMatriz()">
+            </div>
+            <div class="form-group">
+                <label for="m_tamY">Tamanho Ilha Y (mm):</label>
+                <input type="number" id="m_tamY" value="40.0" oninput="validarMatriz()">
+            </div>
+            <div class="form-group">
+                <label for="m_canal">Largura Canal (mm):</label>
+                <input type="number" id="m_canal" value="20.0" oninput="validarMatriz()">
+            </div>
+            <div id="statusMatriz" class="status-box ok">Verificando matriz...</div>
+            <div class="form-group">
+                <label for="m_numT">Ferramenta Desbaste (T):</label>
+                <input type="number" id="m_numT" value="12">
+            </div>
+            <div class="form-group">
+                <label for="m_diam">Diâmetro Desbaste (mm):</label>
+                <input type="number" id="m_diam" value="12" step="0.1" oninput="validarMatriz()">
+            </div>
+            <div class="form-group">
+                <label for="m_rpm">RPM Desbaste:</label>
+                <input type="number" id="m_rpm" value="3000">
+            </div>
+            <div class="form-group">
+                <label for="m_avanco">Avanço Desbaste (mm/min):</label>
+                <input type="number" id="m_avanco" value="1200">
+            </div>
+            <div class="form-group">
+                <label for="m_sobremetal">Sobremetal X/Y (mm):</label>
+                <input type="number" id="m_sobremetal" value="0.3" step="0.05">
+            </div>
+            <div class="form-group">
+                <label for="m_execAcab">Executar Acabamento?</label>
+                <select id="m_execAcab" onchange="alternarAcabamentoMatriz()">
+                    <option value="SIM" selected>Sim</option>
+                    <option value="NAO">Não</option>
+                </select>
+            </div>
+            <div id="blocoAcabamentoMatriz">
+                <div class="form-group">
+                    <label for="m_numTAcab">Ferramenta Acabamento (T):</label>
+                    <input type="number" id="m_numTAcab" value="10">
+                </div>
+                <div class="form-group">
+                    <label for="m_diamAcab">Diâmetro Acabamento (mm):</label>
+                    <input type="number" id="m_diamAcab" value="10" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="m_rpmAcab">RPM Acabamento:</label>
+                    <input type="number" id="m_rpmAcab" value="3800">
+                </div>
+                <div class="form-group">
+                    <label for="m_avancoAcab">Avanço Acabamento (mm/min):</label>
+                    <input type="number" id="m_avancoAcab" value="1500">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="m_zAprox">Z Aproximação / Segurança (mm):</label>
+                <input type="number" id="m_zAprox" value="5.0" step="0.1" oninput="validarMatriz()">
+            </div>
+            <div class="form-group">
+                <label for="m_zInicial">Z Inicial (mm):</label>
+                <input type="number" id="m_zInicial" value="0.0" step="0.1" oninput="validarMatriz()">
+            </div>
+            <div class="form-group">
+                <label for="m_zPasse">Passe em Z (mm):</label>
+                <input type="number" id="m_zPasse" value="2.0" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="m_zFinal">Z Final (mm):</label>
+                <input type="number" id="m_zFinal" value="12.0" step="0.1">
+            </div>
+            <button id="btnGerarMatriz" class="btn-generate" onclick="gerarMatriz()">Gerar Apenas Matriz</button>
+        </div>
+
+        <!-- ABA 4: LISTA E PADRÕES DE FUROS -->
+        <div id="aba-lista-furos" class="tab-content">
+            <h2>Padrões de Furação com Escolha de Broca</h2>
+            <div class="form-group">
+                <label for="lf_zeroPeca">Zero Peça:</label>
+                <select id="lf_zeroPeca">
+                    <option value="G54" selected>G54 (Centro do Bruto)</option>
+                    <option value="G55">G55</option>
+                    <option value="G56">G56</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="lf_zAprox">Z Aproximação / Segurança R (mm):</label>
+                <input type="number" id="lf_zAprox" value="5.0" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="lf_zInicial">Z Inicial (mm):</label>
+                <input type="number" id="lf_zInicial" value="0.0" step="0.1">
+            </div>
+
+            <h2>Parâmetros da Broca Ativa</h2>
+            <div class="row-inputs">
+                <div class="form-group">
+                    <label for="furo_t">Broca (T):</label>
+                    <input type="number" id="furo_t" value="5">
+                </div>
+                <div class="form-group">
+                    <label for="furo_diam">Diâmetro (mm):</label>
+                    <input type="number" id="furo_diam" value="8.0" step="0.1">
+                </div>
+            </div>
+            <div class="row-inputs">
+                <div class="form-group">
+                    <label for="furo_rpm">RPM:</label>
+                    <input type="number" id="furo_rpm" value="1800">
+                </div>
+                <div class="form-group">
+                    <label for="furo_avanco">Avanço (mm/min):</label>
+                    <input type="number" id="furo_avanco" value="220">
+                </div>
+            </div>
+            <div class="row-inputs">
+                <div class="form-group">
+                    <label for="furo_zfinal">Z Final (mm):</label>
+                    <input type="number" id="furo_zfinal" value="20.0" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="furo_qpasse">Pica-Pau Q (mm):</label>
+                    <input type="number" id="furo_qpasse" value="3.0" step="0.1">
+                </div>
+            </div>
+
+            <h2>Tipo de Adição / Padrão de Furos</h2>
+            <div class="form-group">
+                <label for="tipo_padrao_furo">Selecione o Padrão:</label>
+                <select id="tipo_padrao_furo" onchange="alternarCamposPadrao()">
+                    <option value="UNICO" selected>1. Furo Único Manual</option>
+                    <option value="QUADRADA">2. Malha Quadrada (Linhas x Colunas)</option>
+                    <option value="TRIANGULAR">3. Malha Triangular / Alternada (Colméia)</option>
+                    <option value="FLANGE">4. Círculo Flange (PCD)</option>
+                    <option value="PERSONALIZADA">5. Malha Personalizada (Projeto Texto)</option>
+                </select>
+            </div>
+
+            <!-- OPÇÃO 1: UNICO -->
+            <div id="bloco_padrao_unico">
+                <div class="row-inputs">
+                    <div class="form-group">
+                        <label for="add_x">Coord. X (mm):</label>
+                        <input type="number" id="add_x" value="0.0" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="add_y">Coord. Y (mm):</label>
+                        <input type="number" id="add_y" value="0.0" step="0.1">
+                    </div>
+                </div>
+                <button class="btn-secondary" onclick="adicionarFuroManual()">+ Adicionar Furo Único</button>
+            </div>
+
+            <!-- OPÇÕES 2 E 3: MALHAS QUADRADA E TRIANGULAR -->
+            <div id="bloco_padrao_malha" style="display:none;">
+                <div class="row-inputs">
+                    <div class="form-group">
+                        <label for="malha_colunas">Colunas em X:</label>
+                        <input type="number" id="malha_colunas" value="4" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="malha_linhas">Linhas em Y:</label>
+                        <input type="number" id="malha_linhas" value="4" min="1">
+                    </div>
+                </div>
+                <div class="row-inputs">
+                    <div class="form-group">
+                        <label for="malha_distX">Espaçamento X (mm):</label>
+                        <input type="number" id="malha_distX" value="30.0" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="malha_distY">Espaçamento Y (mm):</label>
+                        <input type="number" id="malha_distY" value="30.0" step="0.1">
+                    </div>
+                </div>
+                <button class="btn-secondary" onclick="gerarMalhaFuros()">+ Gerar Malha de Furos</button>
+            </div>
+
+            <!-- OPÇÃO 4: FLANGE CIRCULAR -->
+            <div id="bloco_padrao_flange" style="display:none;">
+                <div class="row-inputs">
+                    <div class="form-group">
+                        <label for="pcd_qtd">Qtd Furos:</label>
+                        <input type="number" id="pcd_qtd" value="6" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="pcd_raio">Raio do Círculo (mm):</label>
+                        <input type="number" id="pcd_raio" value="60.0" step="0.1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="pcd_ang">Ângulo Inicial (°):</label>
+                    <input type="number" id="pcd_ang" value="0.0" step="1">
+                </div>
+                <button class="btn-secondary" onclick="gerarPadraoFlange()">+ Adicionar Flange Circular</button>
+            </div>
+
+            <!-- OPÇÃO 5: PERSONALIZADA (PROJETO TEXTO) -->
+            <div id="bloco_padrao_personalizada" style="display:none;">
+                <div class="form-group">
+                    <label for="txt_coords_projeto">Digite as coordenadas (X, Y por linha):</label>
+                    <textarea id="txt_coords_projeto" class="input-txt" rows="4" placeholder="Exemplo:&#10;10.5, 20.0&#10;-15.0, 30.5&#10;50.0, -10.0"></textarea>
+                </div>
+                <button class="btn-secondary" onclick="carregarMalhaPersonalizada()">+ Importar Lista de Coordenadas</button>
+            </div>
+
+            <h2>Tabela de Furos e Brocas Cadastradas</h2>
+            <table class="table-furos">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>X, Y (mm)</th>
+                        <th>T (Broca)</th>
+                        <th>Ø (mm)</th>
+                        <th>Z Final</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoTabelaFuros">
+                    <!-- Preenchido via JavaScript -->
+                </tbody>
+            </table>
+            
+            <div class="row-inputs" style="margin-top: 8px;">
+                <button class="btn-secondary" onclick="copiarCoordenadasXY()">📋 Copiar Coordenadas X, Y</button>
+                <button class="btn-secondary" style="background-color: var(--danger);" onclick="limparTodosFuros()">Limpar Tabela de Furos</button>
+            </div>
+
+            <button class="btn-generate" onclick="gerarListaFurosGCode()">Gerar Código das Furações</button>
+        </div>
+
+        <!-- ABA 5: CAVIDADE COM FUROS DE ALÍVIO E REDUÇÃO DE RAIO -->
+        <div id="aba-cavidade" class="tab-content">
+            <h2>Usinagem de Cavidade Reta com Alívio</h2>
+            
+            <div class="form-group">
+                <label for="cav_zeroPeca">Zero Peça:</label>
+                <select id="cav_zeroPeca">
+                    <option value="G54" selected>G54 (Centro do Bruto)</option>
+                    <option value="G55">G55</option>
+                    <option value="G56">G56</option>
+                </select>
+            </div>
+
+            <h2>Modo de Posicionamento da Cavidade</h2>
+            <div class="form-group">
+                <label for="cav_modoPosicao">Modo:</label>
+                <select id="cav_modoPosicao" onchange="alternarModoPosicaoCavidade()">
+                    <option value="UNICA" selected>Cavidade Única (Centro Especificado)</option>
+                    <option value="MALHA">Malha de Cavidades (Matriz X / Y)</option>
+                </select>
+            </div>
+
+            <h2>Geometria da Cavidade (Retangular)</h2>
+            <div class="row-inputs">
+                <div class="form-group">
+                    <label for="cav_dimX">Comprimento X (mm):</label>
+                    <input type="number" id="cav_dimX" value="100.0" step="0.1" oninput="validarCavidade()">
+                </div>
+                <div class="form-group">
+                    <label for="cav_dimY">Largura Y (mm):</label>
+                    <input type="number" id="cav_dimY" value="60.0" step="0.1" oninput="validarCavidade()">
+                </div>
+            </div>
+
+            <!-- PAINEL POSICIONAMENTO ÚNICO -->
+            <div id="bloco_cavidade_unica">
+                <div class="row-inputs">
+                    <div class="form-group">
+                        <label for="cav_centroX">Centro X (mm):</label>
+                        <input type="number" id="cav_centroX" value="0.0" step="0.1" oninput="validarCavidade()">
+                    </div>
+                    <div class="form-group">
+                        <label for="cav_centroY">Centro Y (mm):</label>
+                        <input type="number" id="cav_centroY" value="0.0" step="0.1" oninput="validarCavidade()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAINEL POSICIONAMENTO EM MALHA -->
+            <div id="bloco_cavidade_malha" style="display:none; background-color: #1f1f2e; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); margin-bottom: 12px;">
+                <div class="row-inputs">
+                    <div class="form-group">
+                        <label for="cav_colunas">Colunas (X):</label>
+                        <input type="number" id="cav_colunas" value="2" min="1" oninput="validarCavidade()">
+                    </div>
+                    <div class="form-group">
+                        <label for="cav_linhas">Linhas (Y):</label>
+                        <input type="number" id="cav_linhas" value="2" min="1" oninput="validarCavidade()">
+                    </div>
+                </div>
+                <div class="row-inputs">
+                    <div class="form-group">
+                        <label for="cav_distX">Espaçamento Entre Centros X (mm):</label>
+                        <input type="number" id="cav_distX" value="110.0" step="0.1" oninput="validarCavidade()">
+                    </div>
+                    <div class="form-group">
+                        <label for="cav_distY">Espaçamento Entre Centros Y (mm):</label>
+                        <input type="number" id="cav_distY" value="70.0" step="0.1" oninput="validarCavidade()">
+                    </div>
+                </div>
+            </div>
+
+            <h2>Furação de Alívio Sequencial (Multi-Brocas)</h2>
+            <div class="checkbox-group">
+                <input type="checkbox" id="cav_execAlivio" checked onchange="alternarOpcaoAlivio()">
+                <label for="cav_execAlivio" style="margin:0; cursor:pointer; color:#fff; font-weight:bold;">Executar Furo(s) de Alívio Prévio(s)</label>
+            </div>
+
+            <div id="blocoParametrosAlivio">
+                <div class="row-inputs">
+                    <div class="form-group">
+                        <label for="cav_alivioOffX">Offset Alívio X do Centro (mm):</label>
+                        <input type="number" id="cav_alivioOffX" value="0.0" step="0.1" oninput="validarCavidade()">
+                    </div>
+                    <div class="form-group">
+                        <label for="cav_alivioOffY">Offset Alívio Y do Centro (mm):</label>
+                        <input type="number" id="cav_alivioOffY" value="0.0" step="0.1" oninput="validarCavidade()">
+                    </div>
+                </div>
+
+                <h2>Adicionar Broca para a Sequência de Alívio</h2>
+                <div class="row-inputs">
+                    <div class="form-group">
+                        <label for="alivio_t">Broca (T):</label>
+                        <input type="number" id="alivio_t" value="4">
+                    </div>
+                    <div class="form-group">
+                        <label for="alivio_diam">Diâmetro (mm):</label>
+                        <input type="number" id="alivio_diam" value="8.0" step="0.1">
+                    </div>
+                </div>
+                <div class="row-inputs">
+                    <div class="form-group">
+                        <label for="alivio_rpm">RPM:</label>
+                        <input type="number" id="alivio_rpm" value="1800">
+                    </div>
+                    <div class="form-group">
+                        <label for="alivio_avanco">Avanço (mm/min):</label>
+                        <input type="number" id="alivio_avanco" value="200">
+                    </div>
+                    <div class="form-group">
+                        <label for="alivio_q">Passo Q (mm):</label>
+                        <input type="number" id="alivio_q" value="4.0" step="0.1">
+                    </div>
+                </div>
+                <button class="btn-secondary" onclick="adicionarBrocaAlivio()">+ Adicionar Broca de Alívio</button>
+
+                <h3 style="font-size:0.85rem; color:var(--accent); margin-top:10px; margin-bottom:5px;">Sequência de Brocas Cadastradas (Ord. Diâmetro)</h3>
+                <table class="table-furos">
+                    <thead>
+                        <tr>
+                            <th>T</th>
+                            <th>Ø (mm)</th>
+                            <th>RPM</th>
+                            <th>F</th>
+                            <th>Q</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpoTabelaBrocasAlivio">
+                        <!-- Preenchido via JavaScript -->
+                    </tbody>
+                </table>
+                <button class="btn-secondary" style="background-color: var(--danger); margin-top: 6px;" onclick="limparBrocasAlivio()">Limpar Lista de Brocas</button>
+            </div>
+
+            <h2>Ferramenta de Desbaste da Cavidade</h2>
+            <div class="row-inputs">
+                <div class="form-group">
+                    <label for="cav_fresaT">Fresa Desbaste (T):</label>
+                    <input type="number" id="cav_fresaT" value="10">
+                </div>
+                <div class="form-group">
+                    <label for="cav_fresaDiam">Diâmetro Fresa (mm):</label>
+                    <input type="number" id="cav_fresaDiam" value="16.0" step="0.1" oninput="validarCavidade()">
+                </div>
+            </div>
+            <div class="row-inputs">
+                <div class="form-group">
+                    <label for="cav_fresaRpm">RPM Fresa Desbaste:</label>
+                    <input type="number" id="cav_fresaRpm" value="2800">
+                </div>
+                <div class="form-group">
+                    <label for="cav_fresaAvanco">Avanço Desbaste (mm/min):</label>
+                    <input type="number" id="cav_fresaAvanco" value="1000">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="cav_passoLateral">Passo Lateral % Diâmetro (0.1 a 0.8):</label>
+                <input type="number" id="cav_passoLateral" value="0.6" step="0.05" min="0.1" max="0.9">
+            </div>
+
+            <h2>Contorno / Redução de Raio nos Cantos (Acabamento)</h2>
+            <div class="checkbox-group">
+                <input type="checkbox" id="cav_execContornoRaio" checked onchange="alternarOpcaoContornoRaio()">
+                <label for="cav_execContornoRaio" style="margin:0; cursor:pointer; color:#fff; font-weight:bold;">Executar Contorno / Redução de Raio</label>
+            </div>
+
+            <div id="blocoParametrosContornoRaio">
+                <div class="row-inputs">
+                    <div class="form-group">
+                        <label for="cav_acabT">Fresa Acabamento (T):</label>
+                        <input type="number" id="cav_acabT" value="6">
+                    </div>
+                    <div class="form-group">
+                        <label for="cav_acabDiam">Diâmetro Menor (mm):</label>
+                        <input type="number" id="cav_acabDiam" value="6.0" step="0.1" oninput="validarCavidade()">
+                    </div>
+                </div>
+                <div class="row-inputs">
+                    <div class="form-group">
+                        <label for="cav_acabRpm">RPM Fresa Menor:</label>
+                        <input type="number" id="cav_acabRpm" value="3800">
+                    </div>
+                    <div class="form-group">
+                        <label for="cav_acabAvanco">Avanço Acabamento (mm/min):</label>
+                        <input type="number" id="cav_acabAvanco" value="800">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="cav_sobremetalParedes">Sobremetal Deixado no Desbaste X/Y (mm):</label>
+                    <input type="number" id="cav_sobremetalParedes" value="0.3" step="0.05">
+                </div>
+            </div>
+
+            <h2>Profundidades e Passos</h2>
+            <div class="row-inputs">
+                <div class="form-group">
+                    <label for="cav_zAprox">Z Aproximação (mm):</label>
+                    <input type="number" id="cav_zAprox" value="5.0" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="cav_zInicial">Z Inicial (mm):</label>
+                    <input type="number" id="cav_zInicial" value="0.0" step="0.1">
+                </div>
+            </div>
+            <div class="row-inputs">
+                <div class="form-group">
+                    <label for="cav_zPasse">Passe em Z (mm):</label>
+                    <input type="number" id="cav_zPasse" value="2.0" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="cav_zFinal">Z Final Cavidade (mm):</label>
+                    <input type="number" id="cav_zFinal" value="15.0" step="0.1">
+                </div>
+            </div>
+
+            <div id="statusCavidade" class="status-box ok">Verificando cavidade...</div>
+
+            <button id="btnGerarCavidade" class="btn-generate" onclick="gerarCavidadeGCode()">Gerar Código da Cavidade</button>
+        </div>
+
+    </div>
+
+    <!-- PAINEL DE SIMULAÇÃO E CÓDIGO CNC -->
+    <div class="panel output-container">
+        
+        <!-- COMPONENTE: SIMULADOR 3D & 2D COM ANIMAÇÃO PLAY / PAUSE -->
+        <div class="sim-wrapper">
+            <div class="sim-header-bar">
+                <h3 class="sim-title">3D & 2D CNC Machining Simulator</h3>
+                <div class="sim-mode-toggle">
+                    <button id="btnSim2D" class="sim-toggle-btn active" onclick="definirModoSimulador('2D')">Visão 2D (Plano XY)</button>
+                    <button id="btnSim3D" class="sim-toggle-btn" onclick="definirModoSimulador('3D')">Visão 3D (Bruto)</button>
+                </div>
+            </div>
+            <canvas id="mainSimCanvas" class="sim-canvas" width="700" height="280"></canvas>
+            
+            <div class="sim-controls-bar">
+                <button id="btnPlaySim" class="btn-sim-control" onclick="alternarAnimacaoSimulador()">▶ Play</button>
+                <button id="btnResetSim" class="btn-sim-control" onclick="resetarAnimacaoSimulador()">↺ Reset</button>
+                <input type="range" id="simProgressSlider" class="sim-progress-slider" min="0" max="100" value="0" oninput="aoMudarProgressoSlider(this.value)">
+                <span id="simProgressTxt" style="font-size:0.75rem; color:#aaa; font-family:monospace; min-width:45px;">0%</span>
+                <select id="simSpeedSelect" class="sim-speed-select" onchange="alterarVelocidadeSimulador(this.value)">
+                    <option value="1">1x</option>
+                    <option value="2" selected>2x</option>
+                    <option value="5">5x</option>
+                    <option value="10">10x</option>
+                </select>
+            </div>
+
+            <div class="sim-legenda">
+                <div class="legenda-item"><div class="legenda-box" style="border: 1px dashed #ff9900;"></div><span>Bruto</span></div>
+                <div class="legenda-item"><div class="legenda-box" style="background-color: #00adb5;"></div><span>Faceamento</span></div>
+                <div class="legenda-item"><div class="legenda-box" style="background-color: #a6e3a1;"></div><span>Contorno</span></div>
+                <div class="legenda-item"><div class="legenda-box" style="background-color: #cba6f7;"></div><span>Matriz Ilhas</span></div>
+                <div class="legenda-item"><div class="legenda-box" style="background-color: #89dceb;"></div><span>Cavidade</span></div>
+                <div class="legenda-item"><div class="legenda-box" style="background-color: #f9e2af;"></div><span>Alívio</span></div>
+                <div class="legenda-item"><div class="legenda-box" style="background-color: #f38ba8;"></div><span>Furações (G83)</span></div>
+            </div>
+        </div>
+
+        <h2>Código CNC Gerado (Padrão CNC Real)</h2>
+        <textarea id="codigoGcode" class="gcode-area" readonly placeholder="Selecione as operações desejadas e clique em 'Gerar Programa Único Combinado'..."></textarea>
+        
+        <div class="actions-bar">
+            <button id="btnCalc" class="btn-action" onclick="alternarCalculadora()">🧮 Calculadora</button>
+            <button id="btnBaixarTxt" class="btn-action" disabled onclick="baixarRelatorioTXT()">📄 Baixar Relatório (TXT)</button>
+            <button id="btnCopiar" class="btn-action" disabled onclick="copiarCodigo()">📋 Copiar Código</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL CALCULADORA FLUTUANTE -->
+<div id="calcModal" class="calc-modal">
+    <div id="calcHeader" class="calc-header">
+        <span class="calc-title">🧮 Calculadora CNC</span>
+        <button class="btn-close-calc" onclick="alternarCalculadora()">×</button>
+    </div>
+    <div class="calc-body">
+        <input type="text" id="calcDisplay" class="calc-display" value="0" readonly>
+        <div class="calc-grid">
+            <button class="calc-btn clear" onclick="limparCalc()">C</button>
+            <button class="calc-btn func" onclick="apagarDigitoCalc()">⌫</button>
+            <button class="calc-btn func" onclick="addCalc('(')">(</button>
+            <button class="calc-btn func" onclick="addCalc(')')">)</button>
+
+            <button class="calc-btn func" onclick="execFuncCalc('sin')">sin</button>
+            <button class="calc-btn func" onclick="execFuncCalc('cos')">cos</button>
+            <button class="calc-btn func" onclick="execFuncCalc('tan')">tan</button>
+            <button class="calc-btn operator" onclick="addCalc('/')">÷</button>
+
+            <button class="calc-btn func" onclick="execFuncCalc('sqrt')">√</button>
+            <button class="calc-btn func" onclick="execFuncCalc('sqr')">x²</button>
+            <button class="calc-btn func" onclick="addCalc('Math.PI')">π</button>
+            <button class="calc-btn operator" onclick="addCalc('*')">×</button>
+
+            <button class="calc-btn" onclick="addCalc('7')">7</button>
+            <button class="calc-btn" onclick="addCalc('8')">8</button>
+            <button class="calc-btn" onclick="addCalc('9')">9</button>
+            <button class="calc-btn operator" onclick="addCalc('-')">-</button>
+
+            <button class="calc-btn" onclick="addCalc('4')">4</button>
+            <button class="calc-btn" onclick="addCalc('5')">5</button>
+            <button class="calc-btn" onclick="addCalc('6')">6</button>
+            <button class="calc-btn operator" onclick="addCalc('+')">+</button>
+
+            <button class="calc-btn" onclick="addCalc('1')">1</button>
+            <button class="calc-btn" onclick="addCalc('2')">2</button>
+            <button class="calc-btn" onclick="addCalc('3')">3</button>
+            <button class="calc-btn func" onclick="usarAnsCalc()">Ans</button>
+
+            <button class="calc-btn" onclick="addCalc('0')">0</button>
+            <button class="calc-btn" onclick="addCalc('.')">,</button>
+            <button class="calc-btn equals" onclick="calcularResultadoCalc()">=</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let modoSimuladorAtual = '2D';
+    let codigoFoiCopiado = false;
+
+    // VARIÁVEIS DA ANIMAÇÃO DO SIMULADOR
+    let animandoSimulador = false;
+    let tempoAnimacaoSim = 0;
+    let idAnimacaoSim = null;
+    let velocidadeSimulador = 2;
+    let trajetoSimulacaoTotal = [];
+
+    let listaFurosCustom = [
+        {x: 60, y: 0, t: 5, diam: 8.0, rpm: 1800, avanco: 220, zFinal: 20, qPasse: 3},
+        {x: 0, y: 60, t: 5, diam: 8.0, rpm: 1800, avanco: 220, zFinal: 20, qPasse: 3},
+        {x: -60, y: 0, t: 8, diam: 10.5, rpm: 1500, avanco: 180, zFinal: 25, qPasse: 4},
+        {x: 0, y: -60, t: 8, diam: 10.5, rpm: 1500, avanco: 180, zFinal: 25, qPasse: 4}
+    ];
+
+    let listaBrocasAlivio = [
+        {t: 3, diam: 6.0, rpm: 2200, avanco: 250, q: 3.0},
+        {t: 4, diam: 12.0, rpm: 1600, avanco: 180, q: 4.0}
+    ];
+
+    // --- LÓGICA DO SIMULADOR INTEGRADO 2D / 3D E CAMINHO DA FERRAMENTA ---
+    function definirModoSimulador(modo) {
+        modoSimuladorAtual = modo;
+        document.getElementById('btnSim2D').classList.toggle('active', modo === '2D');
+        document.getElementById('btnSim3D').classList.toggle('active', modo === '3D');
+        atualizarSimulador();
+    }
+
+    function alternarAcabamentoContorno() {
+        const opcao = document.getElementById('c_execAcab').value;
+        const bloco = document.getElementById('blocoAcabamentoContorno');
+        if (opcao === 'NAO') {
+            bloco.style.display = 'none';
+        } else {
+            bloco.style.display = 'block';
+        }
+    }
+
+    function alternarAnimacaoSimulador() {
+        animandoSimulador = !animandoSimulador;
+        const btn = document.getElementById('btnPlaySim');
+        if (animandoSimulador) {
+            btn.innerHTML = '⏸ Pause';
+            loopAnimacaoSimulador();
+        } else {
+            btn.innerHTML = '▶ Play';
+            if (idAnimacaoSim) cancelAnimationFrame(idAnimacaoSim);
+        }
+    }
+
+    function resetarAnimacaoSimulador() {
+        tempoAnimacaoSim = 0;
+        animandoSimulador = false;
+        document.getElementById('btnPlaySim').innerHTML = '▶ Play';
+        document.getElementById('simProgressSlider').value = 0;
+        document.getElementById('simProgressTxt').innerText = '0%';
+        if (idAnimacaoSim) cancelAnimationFrame(idAnimacaoSim);
+        atualizarSimulador();
+    }
+
+    function aoMudarProgressoSlider(val) {
+        tempoAnimacaoSim = parseFloat(val) / 100;
+        document.getElementById('simProgressTxt').innerText = Math.round(val) + '%';
+        atualizarSimulador();
+    }
+
+    function alterarVelocidadeSimulador(v) {
+        velocidadeSimulador = parseFloat(v);
+    }
+
+    function loopAnimacaoSimulador() {
+        if (!animandoSimulador) return;
+
+        tempoAnimacaoSim += 0.002 * velocidadeSimulador;
+        if (tempoAnimacaoSim > 1.0) {
+            tempoAnimacaoSim = 1.0;
+            animandoSimulador = false;
+            document.getElementById('btnPlaySim').innerHTML = '▶ Play';
+        }
+
+        let pct = Math.round(tempoAnimacaoSim * 100);
+        document.getElementById('simProgressSlider').value = pct;
+        document.getElementById('simProgressTxt').innerText = pct + '%';
+
+        atualizarSimulador();
+
+        if (animandoSimulador) {
+            idAnimacaoSim = requestAnimationFrame(loopAnimacaoSimulador);
+        }
+    }
+
+    function construirTrajetoSimulacao() {
+        trajetoSimulacaoTotal = [];
+
+        const brutoX = parseFloat(document.getElementById('multi_brutoX').value) || 250;
+        const brutoY = parseFloat(document.getElementById('multi_brutoY').value) || 250;
+
+        // 1. FACEAMENTO
+        if (document.getElementById('chk_faceamento').checked) {
+            const fDiam = parseFloat(document.getElementById('f_diam').value) || 70;
+            const zFinal = parseFloat(document.getElementById('f_zFinal').value) || -1;
+            const passoY = fDiam * 0.6;
+            let yAtual = -brutoY / 2;
+            let dir = true;
+
+            while (yAtual <= brutoY / 2) {
+                let xStart = dir ? -brutoX / 2 - fDiam / 2 : brutoX / 2 + fDiam / 2;
+                let xEnd = dir ? brutoX / 2 + fDiam / 2 : -brutoX / 2 - fDiam / 2;
+
+                trajetoSimulacaoTotal.push({ x: xStart, y: yAtual, z: zFinal, diam: fDiam, cor: '#00adb5' });
+                trajetoSimulacaoTotal.push({ x: xEnd, y: yAtual, z: zFinal, diam: fDiam, cor: '#00adb5' });
+
+                yAtual += passoY;
+                dir = !dir;
+            }
+        }
+
+        // 2. CONTORNO (Desbaste + Acabamento Opcional)
+        if (document.getElementById('chk_contorno').checked) {
+            const cDiam = parseFloat(document.getElementById('c_diamDesb').value) || 32;
+            const cZFinal = -Math.abs(parseFloat(document.getElementById('c_zFinal').value) || 12);
+            const sobremetal = parseFloat(document.getElementById('c_sobremetal').value) || 0.3;
+
+            let xMin = -brutoX / 2 - sobremetal; let xMax = brutoX / 2 + sobremetal;
+            let yMin = -brutoY / 2 - sobremetal; let yMax = brutoY / 2 + sobremetal;
+
+            // Desbaste
+            trajetoSimulacaoTotal.push({ x: xMin, y: yMin, z: cZFinal, diam: cDiam, cor: '#a6e3a1' });
+            trajetoSimulacaoTotal.push({ x: xMax, y: yMin, z: cZFinal, diam: cDiam, cor: '#a6e3a1' });
+            trajetoSimulacaoTotal.push({ x: xMax, y: yMax, z: cZFinal, diam: cDiam, cor: '#a6e3a1' });
+            trajetoSimulacaoTotal.push({ x: xMin, y: yMax, z: cZFinal, diam: cDiam, cor: '#a6e3a1' });
+            trajetoSimulacaoTotal.push({ x: xMin, y: yMin, z: cZFinal, diam: cDiam, cor: '#a6e3a1' });
+
+            // Acabamento
+            if (document.getElementById('c_execAcab').value === 'SIM') {
+                const cDiamAcab = parseFloat(document.getElementById('c_diamAcab').value) || 20;
+                let xMinA = -brutoX / 2; let xMaxA = brutoX / 2;
+                let yMinA = -brutoY / 2; let yMaxA = brutoY / 2;
+
+                trajetoSimulacaoTotal.push({ x: xMinA, y: yMinA, z: cZFinal, diam: cDiamAcab, cor: '#00adb5' });
+                trajetoSimulacaoTotal.push({ x: xMaxA, y: yMinA, z: cZFinal, diam: cDiamAcab, cor: '#00adb5' });
+                trajetoSimulacaoTotal.push({ x: xMaxA, y: yMaxA, z: cZFinal, diam: cDiamAcab, cor: '#00adb5' });
+                trajetoSimulacaoTotal.push({ x: xMinA, y: yMaxA, z: cZFinal, diam: cDiamAcab, cor: '#00adb5' });
+                trajetoSimulacaoTotal.push({ x: xMinA, y: yMinA, z: cZFinal, diam: cDiamAcab, cor: '#00adb5' });
+            }
+        }
+
+        // 3. MATRIZ DE ILHAS
+        if (document.getElementById('chk_matriz').checked) {
+            const cols = parseInt(document.getElementById('m_colunas').value) || 1;
+            const lins = parseInt(document.getElementById('m_linhas').value) || 1;
+            const tX = parseFloat(document.getElementById('m_tamX').value) || 40;
+            const tY = parseFloat(document.getElementById('m_tamY').value) || 40;
+            const canal = parseFloat(document.getElementById('m_canal').value) || 20;
+            const mDiam = parseFloat(document.getElementById('m_diam').value) || 12;
+            const mZFinal = -Math.abs(parseFloat(document.getElementById('m_zFinal').value) || 12);
+
+            const totX = (cols * tX) + ((cols - 1) * canal);
+            const totY = (lins * tY) + ((lins - 1) * canal);
+            const startX = -(totX / 2) + (tX / 2);
+            const startY = -(totY / 2) + (tY / 2);
+
+            for (let l = 0; l < lins; l++) {
+                for (let c = 0; c < cols; c++) {
+                    let posX = startX + (c * (tX + canal));
+                    let posY = startY + (l * (tY + canal));
+                    let minX = posX - tX / 2; let maxX = posX + tX / 2;
+                    let minY = posY - tY / 2; let maxY = posY + tY / 2;
+
+                    trajetoSimulacaoTotal.push({ x: minX, y: minY, z: mZFinal, diam: mDiam, cor: '#cba6f7' });
+                    trajetoSimulacaoTotal.push({ x: maxX, y: minY, z: mZFinal, diam: mDiam, cor: '#cba6f7' });
+                    trajetoSimulacaoTotal.push({ x: maxX, y: maxY, z: mZFinal, diam: mDiam, cor: '#cba6f7' });
+                    trajetoSimulacaoTotal.push({ x: minX, y: maxY, z: mZFinal, diam: mDiam, cor: '#cba6f7' });
+                    trajetoSimulacaoTotal.push({ x: minX, y: minY, z: mZFinal, diam: mDiam, cor: '#cba6f7' });
+                }
+            }
+        }
+
+        // 4. LISTA DE FUROS
+        if (document.getElementById('chk_lista_furos').checked) {
+            listaFurosCustom.forEach(f => {
+                trajetoSimulacaoTotal.push({ x: f.x, y: f.y, z: 5, diam: f.diam, cor: '#f38ba8' });
+                trajetoSimulacaoTotal.push({ x: f.x, y: f.y, z: -f.zFinal, diam: f.diam, cor: '#f38ba8' });
+                trajetoSimulacaoTotal.push({ x: f.x, y: f.y, z: 5, diam: f.diam, cor: '#f38ba8' });
+            });
+        }
+
+        // 5. CAVIDADE E ALÍVIO
+        if (document.getElementById('chk_cavidade').checked) {
+            const dimX = parseFloat(document.getElementById('cav_dimX').value) || 100;
+            const dimY = parseFloat(document.getElementById('cav_dimY').value) || 60;
+            const execAlivio = document.getElementById('cav_execAlivio').checked;
+            const offX = parseFloat(document.getElementById('cav_alivioOffX').value) || 0;
+            const offY = parseFloat(document.getElementById('cav_alivioOffY').value) || 0;
+            const cavDiam = parseFloat(document.getElementById('cav_fresaDiam').value) || 16;
+            const cavZFinal = -Math.abs(parseFloat(document.getElementById('cav_zFinal').value) || 15);
+
+            let centros = obterCentrosCavidades();
+
+            centros.forEach(cnt => {
+                if (execAlivio && listaBrocasAlivio.length > 0) {
+                    let b = listaBrocasAlivio[0];
+                    trajetoSimulacaoTotal.push({ x: cnt.x + offX, y: cnt.y + offY, z: 5, diam: b.diam, cor: '#f9e2af' });
+                    trajetoSimulacaoTotal.push({ x: cnt.x + offX, y: cnt.y + offY, z: cavZFinal, diam: b.diam, cor: '#f9e2af' });
+                    trajetoSimulacaoTotal.push({ x: cnt.x + offX, y: cnt.y + offY, z: 5, diam: b.diam, cor: '#f9e2af' });
+                }
+
+                let minX = cnt.x - dimX / 2 + cavDiam / 2;
+                let maxX = cnt.x + dimX / 2 - cavDiam / 2;
+                let minY = cnt.y - dimY / 2 + cavDiam / 2;
+                let maxY = cnt.y + dimY / 2 - cavDiam / 2;
+
+                trajetoSimulacaoTotal.push({ x: minX, y: minY, z: cavZFinal, diam: cavDiam, cor: '#89dceb' });
+                trajetoSimulacaoTotal.push({ x: maxX, y: minY, z: cavZFinal, diam: cavDiam, cor: '#89dceb' });
+                trajetoSimulacaoTotal.push({ x: maxX, y: maxY, z: cavZFinal, diam: cavDiam, cor: '#89dceb' });
+                trajetoSimulacaoTotal.push({ x: minX, y: maxY, z: cavZFinal, diam: cavDiam, cor: '#89dceb' });
+                trajetoSimulacaoTotal.push({ x: minX, y: minY, z: cavZFinal, diam: cavDiam, cor: '#89dceb' });
+            });
+        }
+    }
+
+    function obterPontoAtualAnimacao() {
+        if (trajetoSimulacaoTotal.length === 0) return null;
+        if (trajetoSimulacaoTotal.length === 1) return trajetoSimulacaoTotal[0];
+
+        let totalPontos = trajetoSimulacaoTotal.length - 1;
+        let indiceExato = tempoAnimacaoSim * totalPontos;
+        let idx1 = Math.floor(indiceExato);
+        let idx2 = Math.min(idx1 + 1, totalPontos);
+        let t = indiceExato - idx1;
+
+        let p1 = trajetoSimulacaoTotal[idx1];
+        let p2 = trajetoSimulacaoTotal[idx2];
+
+        return {
+            x: p1.x + (p2.x - p1.x) * t,
+            y: p1.y + (p2.y - p1.y) * t,
+            z: p1.z + (p2.z - p1.z) * t,
+            diam: p1.diam,
+            cor: p1.cor,
+            indexLimite: idx1
+        };
+    }
+
+    function atualizarSimulador() {
+        const canvas = document.getElementById('mainSimCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+
+        const brutoX = parseFloat(document.getElementById('multi_brutoX').value) || 250;
+        const brutoY = parseFloat(document.getElementById('multi_brutoY').value) || 250;
+        const brutoZ = parseFloat(document.getElementById('multi_brutoZ').value) || 50;
+
+        construirTrajetoSimulacao();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (modoSimuladorAtual === '2D') {
+            desenharSimulador2D(ctx, canvas, brutoX, brutoY);
+        } else {
+            desenharSimulador3D(ctx, canvas, brutoX, brutoY, brutoZ);
+        }
+    }
+
+    function desenharSimulador2D(ctx, canvas, brutoX, brutoY) {
+        const margin = 35;
+        const scale = Math.min((canvas.width - margin * 2) / brutoX, (canvas.height - margin * 2) / brutoY);
+        const cX = canvas.width / 2;
+        const cY = canvas.height / 2;
+
+        function toScreen(x, y) {
+            return { x: cX + (x * scale), y: cY - (y * scale) };
+        }
+
+        ctx.strokeStyle = '#1e1e2e';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let x = -250; x <= 250; x += 50) {
+            let p1 = toScreen(x, -250); let p2 = toScreen(x, 250);
+            ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+        }
+        for (let y = -250; y <= 250; y += 50) {
+            let p1 = toScreen(-250, y); let p2 = toScreen(250, y);
+            ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+        }
+        ctx.stroke();
+
+        let oX = toScreen(0, 0);
+        ctx.strokeStyle = '#3f3f5a';
+        ctx.beginPath(); ctx.arc(oX.x, oX.y, 4, 0, Math.PI * 2); ctx.stroke();
+
+        let bMin = toScreen(-brutoX / 2, brutoY / 2);
+        let bMax = toScreen(brutoX / 2, -brutoY / 2);
+        ctx.strokeStyle = '#ff9900';
+        ctx.setLineDash([4, 4]);
+        ctx.strokeRect(bMin.x, bMin.y, Math.abs(bMax.x - bMin.x), Math.abs(bMax.y - bMin.y));
+        ctx.setLineDash([]);
+
+        let pontoAtualInfo = obterPontoAtualAnimacao();
+        let limiteIdx = pontoAtualInfo ? pontoAtualInfo.indexLimite : trajetoSimulacaoTotal.length;
+
+        for (let i = 0; i < trajetoSimulacaoTotal.length - 1; i++) {
+            let p1 = toScreen(trajetoSimulacaoTotal[i].x, trajetoSimulacaoTotal[i].y);
+            let p2 = toScreen(trajetoSimulacaoTotal[i+1].x, trajetoSimulacaoTotal[i+1].y);
+
+            ctx.strokeStyle = (i <= limiteIdx) ? trajetoSimulacaoTotal[i].cor : '#2a2a3d';
+            ctx.lineWidth = (i <= limiteIdx) ? 2 : 1;
+
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+        }
+
+        if (pontoAtualInfo) {
+            let posTela = toScreen(pontoAtualInfo.x, pontoAtualInfo.y);
+            let raioFerramentaTela = (pontoAtualInfo.diam / 2) * scale;
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1.5;
+
+            ctx.beginPath();
+            ctx.arc(posTela.x, posTela.y, raioFerramentaTela, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#ff5555';
+            ctx.beginPath();
+            ctx.arc(posTela.x, posTela.y, 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    function desenharSimulador3D(ctx, canvas, bx, by, bz) {
+        const cX = canvas.width / 2;
+        const cY = canvas.height / 2 + 30;
+
+        const isoScale = 0.65;
+        const cos = Math.cos(Math.PI / 6) * isoScale;
+        const sin = Math.sin(Math.PI / 6) * isoScale;
+
+        function isoProject(x, y, z) {
+            return {
+                x: cX + (x - y) * cos,
+                y: cY + (x + y) * sin - (z * isoScale)
+            };
+        }
+
+        let p0 = isoProject(-bx/2, -by/2, 0);
+        let p1 = isoProject(bx/2, -by/2, 0);
+        let p2 = isoProject(bx/2, by/2, 0);
+        let p3 = isoProject(-bx/2, by/2, 0);
+
+        let p0B = isoProject(-bx/2, -by/2, -bz);
+        let p1B = isoProject(bx/2, -by/2, -bz);
+        let p2B = isoProject(bx/2, by/2, -bz);
+        let p3B = isoProject(-bx/2, by/2, -bz);
+
+        ctx.fillStyle = '#2b2b3b';
+        ctx.strokeStyle = '#00adb5';
+        ctx.lineWidth = 1.5;
+
+        ctx.beginPath();
+        ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.lineTo(p3.x, p3.y); ctx.closePath();
+        ctx.fill(); ctx.stroke();
+
+        ctx.fillStyle = '#1e1e2e';
+        ctx.beginPath();
+        ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.lineTo(p1B.x, p1B.y); ctx.lineTo(p0B.x, p0B.y); ctx.closePath();
+        ctx.fill(); ctx.stroke();
+
+        ctx.fillStyle = '#181825';
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.lineTo(p2B.x, p2B.y); ctx.lineTo(p1B.x, p1B.y); ctx.closePath();
+        ctx.fill(); ctx.stroke();
+
+        let pontoAtualInfo = obterPontoAtualAnimacao();
+        let limiteIdx = pontoAtualInfo ? pontoAtualInfo.indexLimite : trajetoSimulacaoTotal.length;
+
+        for (let i = 0; i < trajetoSimulacaoTotal.length - 1; i++) {
+            let pt1 = isoProject(trajetoSimulacaoTotal[i].x, trajetoSimulacaoTotal[i].y, trajetoSimulacaoTotal[i].z);
+            let pt2 = isoProject(trajetoSimulacaoTotal[i+1].x, trajetoSimulacaoTotal[i+1].y, trajetoSimulacaoTotal[i+1].z);
+
+            ctx.strokeStyle = (i <= limiteIdx) ? trajetoSimulacaoTotal[i].cor : '#3f3f5a';
+            ctx.lineWidth = (i <= limiteIdx) ? 2 : 1;
+
+            ctx.beginPath();
+            ctx.moveTo(pt1.x, pt1.y);
+            ctx.lineTo(pt2.x, pt2.y);
+            ctx.stroke();
+        }
+
+        if (pontoAtualInfo) {
+            let pos3D = isoProject(pontoAtualInfo.x, pontoAtualInfo.y, pontoAtualInfo.z);
+            let posTopo3D = isoProject(pontoAtualInfo.x, pontoAtualInfo.y, pontoAtualInfo.z + 25);
+
+            ctx.strokeStyle = '#ffb86c';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(pos3D.x, pos3D.y);
+            ctx.lineTo(posTopo3D.x, posTopo3D.y);
+            ctx.stroke();
+
+            ctx.fillStyle = '#ff5555';
+            ctx.beginPath();
+            ctx.arc(pos3D.x, pos3D.y, 4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.fillStyle = '#eeeeee';
+        ctx.font = 'bold 11px Segoe UI';
+        ctx.fillText(`Simulação 3D | Bruto: ${bx} x ${by} x ${bz} mm`, 15, 25);
+    }
+
+    function vincularEscutasSimulador() {
+        document.querySelectorAll('input, select').forEach(el => {
+            el.addEventListener('input', atualizarSimulador);
+            el.addEventListener('change', atualizarSimulador);
+        });
+    }
+
+    // --- LÓGICA DA CALCULADORA ---
+    let calcExpressao = "0";
+    let calcAns = 0;
+    let calcNovaEntrada = true;
+
+    function alternarCalculadora() {
+        const modal = document.getElementById('calcModal');
+        if (modal.style.display === 'block') {
+            modal.style.display = 'none';
+        } else {
+            modal.style.display = 'block';
+        }
+    }
+
+    function atualizarDisplayCalc() {
+        document.getElementById('calcDisplay').value = calcExpressao.replace(/Math\.PI/g, 'π');
+    }
+
+    function addCalc(valor) {
+        if (calcNovaEntrada && !isNaN(valor)) {
+            calcExpressao = valor;
+            calcNovaEntrada = false;
+        } else {
+            if (calcExpressao === "0" && !isNaN(valor)) {
+                calcExpressao = valor;
+            } else {
+                calcExpressao += valor;
+            }
+            calcNovaEntrada = false;
+        }
+        atualizarDisplayCalc();
+    }
+
+    function limparCalc() {
+        calcExpressao = "0";
+        calcNovaEntrada = true;
+        atualizarDisplayCalc();
+    }
+
+    function apagarDigitoCalc() {
+        if (calcExpressao.length > 1) {
+            calcExpressao = calcExpressao.slice(0, -1);
+        } else {
+            calcExpressao = "0";
+            calcNovaEntrada = true;
+        }
+        atualizarDisplayCalc();
+    }
+
+    function execFuncCalc(funcao) {
+        try {
+            let val = parseFloat(eval(calcExpressao));
+            let res = 0;
+            if (funcao === 'sin') res = Math.sin(val * Math.PI / 180);
+            if (funcao === 'cos') res = Math.cos(val * Math.PI / 180);
+            if (funcao === 'tan') res = Math.tan(val * Math.PI / 180);
+            if (funcao === 'sqrt') res = Math.sqrt(val);
+            if (funcao === 'sqr') res = Math.pow(val, 2);
+
+            calcExpressao = Number(res.toFixed(6)).toString();
+            calcAns = res;
+            calcNovaEntrada = true;
+            atualizarDisplayCalc();
+        } catch (e) {
+            calcExpressao = "Erro";
+            calcNovaEntrada = true;
+            atualizarDisplayCalc();
+        }
+    }
+
+    function usarAnsCalc() {
+        addCalc(calcAns.toString());
+    }
+
+    function calcularResultadoCalc() {
+        try {
+            let res = eval(calcExpressao);
+            calcExpressao = Number(res.toFixed(6)).toString();
+            calcAns = res;
+            calcNovaEntrada = true;
+            atualizarDisplayCalc();
+        } catch (e) {
+            calcExpressao = "Erro";
+            calcNovaEntrada = true;
+            atualizarDisplayCalc();
+        }
+    }
+
+    (function arrastarCalculadora() {
+        const modal = document.getElementById("calcModal");
+        const header = document.getElementById("calcHeader");
+        let posX = 0, posY = 0, mouseX = 0, mouseY = 0;
+
+        if (header) {
+            header.onmousedown = arrastarMouseDown;
+        }
+
+        function arrastarMouseDown(e) {
+            e.preventDefault();
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            document.onmouseup = fecharArrasto;
+            document.onmousemove = elementoArrastar;
+        }
+
+        function elementoArrastar(e) {
+            e.preventDefault();
+            posX = mouseX - e.clientX;
+            posY = mouseY - e.clientY;
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            modal.style.top = (modal.offsetTop - posY) + "px";
+            modal.style.left = (modal.offsetLeft - posX) + "px";
+        }
+
+        function fecharArrasto() {
+            document.onmouseup = null;
+            document.onmousemove = null;
+        }
+    })();
+
+    document.addEventListener('keydown', function(event) {
+        const modal = document.getElementById('calcModal');
+        if (modal && modal.style.display === 'block') {
+            if ((event.key >= '0' && event.key <= '9') || event.key === '.' || event.key === '+' || event.key === '-' || event.key === '*' || event.key === '/' || event.key === '(' || event.key === ')') {
+                addCalc(event.key);
+            } else if (event.key === 'Enter') {
+                calcularResultadoCalc();
+            } else if (event.key === 'Backspace') {
+                apagarDigitoCalc();
+            } else if (event.key === 'Escape') {
+                limparCalc();
+            }
+        }
+    });
+
+    function liberarBotoesAcao() {
+        document.getElementById('btnCopiar').disabled = false;
+        document.getElementById('btnBaixarTxt').disabled = false;
+        codigoFoiCopiado = false;
+    }
+
+    function abrirAba(idAba, elementoBotao) {
+        document.querySelectorAll('.tab-content').forEach(aba => aba.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+        document.getElementById(idAba).classList.add('active');
+        elementoBotao.classList.add('active');
+        atualizarSimulador();
+    }
+
+    function alternarAcabamentoMatriz() {
+        const opcao = document.getElementById('m_execAcab').value;
+        const bloco = document.getElementById('blocoAcabamentoMatriz');
+        if (opcao === 'NAO') {
+            bloco.style.display = 'none';
+        } else {
+            bloco.style.display = 'block';
+        }
+    }
+
+    function alternarCamposPadrao() {
+        const tipo = document.getElementById('tipo_padrao_furo').value;
+        document.getElementById('bloco_padrao_unico').style.display = (tipo === 'UNICO') ? 'block' : 'none';
+        document.getElementById('bloco_padrao_malha').style.display = (tipo === 'QUADRADA' || tipo === 'TRIANGULAR') ? 'block' : 'none';
+        document.getElementById('bloco_padrao_flange').style.display = (tipo === 'FLANGE') ? 'block' : 'none';
+        document.getElementById('bloco_padrao_personalizada').style.display = (tipo === 'PERSONALIZADA') ? 'block' : 'none';
+    }
+
+    function alternarModoPosicaoCavidade() {
+        const modo = document.getElementById('cav_modoPosicao').value;
+        document.getElementById('bloco_cavidade_unica').style.display = (modo === 'UNICA') ? 'block' : 'none';
+        document.getElementById('bloco_cavidade_malha').style.display = (modo === 'MALHA') ? 'block' : 'none';
+        validarCavidade();
+    }
+
+    function alternarOpcaoAlivio() {
+        const comAlivio = document.getElementById('cav_execAlivio').checked;
+        const bloco = document.getElementById('blocoParametrosAlivio');
+        if (comAlivio) {
+            bloco.style.display = 'block';
+        } else {
+            bloco.style.display = 'none';
+            alert("ATENÇÃO: Sem furo de alívio prévio, a fresa mergulhará diretamente no material (entrada em cheio/rampa). Certifique-se de que a fresa possui corte central!");
+        }
+        validarCavidade();
+    }
+
+    function alternarOpcaoContornoRaio() {
+        const comContorno = document.getElementById('cav_execContornoRaio').checked;
+        const bloco = document.getElementById('blocoParametrosContornoRaio');
+        if (comContorno) {
+            bloco.style.display = 'block';
+        } else {
+            bloco.style.display = 'none';
+        }
+        validarCavidade();
+    }
+
+    // --- GERENCIAMENTO DAS BROCAS DE ALÍVIO ---
+    function renderizarTabelaBrocasAlivio() {
+        const tbody = document.getElementById('corpoTabelaBrocasAlivio');
+        tbody.innerHTML = '';
+
+        listaBrocasAlivio.sort((a, b) => a.diam - b.diam);
+
+        if (listaBrocasAlivio.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="color:#888;">Nenhuma broca cadastrada.</td></tr>`;
+            validarCavidade();
+            return;
+        }
+
+        listaBrocasAlivio.forEach((broca, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>T${broca.t}</td>
+                <td>${broca.diam.toFixed(1)}</td>
+                <td>${broca.rpm}</td>
+                <td>${broca.avanco}</td>
+                <td>${broca.q.toFixed(1)}</td>
+                <td><button class="btn-del" onclick="removerBrocaAlivio(${index})">X</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        validarCavidade();
+    }
+
+    function adicionarBrocaAlivio() {
+        const t = parseInt(document.getElementById('alivio_t').value) || 1;
+        const diam = parseFloat(document.getElementById('alivio_diam').value) || 1.0;
+        const rpm = parseInt(document.getElementById('alivio_rpm').value) || 1000;
+        const avanco = parseInt(document.getElementById('alivio_avanco').value) || 100;
+        const q = parseFloat(document.getElementById('alivio_q').value) || 2.0;
+
+        listaBrocasAlivio.push({t, diam, rpm, avanco, q});
+        renderizarTabelaBrocasAlivio();
+        atualizarSimulador();
+    }
+
+    function removerBrocaAlivio(index) {
+        listaBrocasAlivio.splice(index, 1);
+        renderizarTabelaBrocasAlivio();
+        atualizarSimulador();
+    }
+
+    function limparBrocasAlivio() {
+        listaBrocasAlivio = [];
+        renderizarTabelaBrocasAlivio();
+        atualizarSimulador();
+    }
+
+    // --- TABELA DE FUROS ABA 4 ---
+    function renderizarTabelaFuros() {
+        const tbody = document.getElementById('corpoTabelaFuros');
+        tbody.innerHTML = '';
+
+        if (listaFurosCustom.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="color:#888;">Nenhum furo adicionado.</td></tr>`;
+            return;
+        }
+
+        listaFurosCustom.forEach((furo, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${furo.x.toFixed(1)}, ${furo.y.toFixed(1)}</td>
+                <td>T${furo.t}</td>
+                <td>${furo.diam.toFixed(1)}</td>
+                <td>-${furo.zFinal.toFixed(1)}</td>
+                <td><button class="btn-del" onclick="removerFuro(${index})">X</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function copiarCoordenadasXY() {
+        if (listaFurosCustom.length === 0) {
+            alert("Nenhum furo cadastrado para copiar!");
+            return;
+        }
+
+        let textoCoords = listaFurosCustom.map(f => `${f.x.toFixed(2)}, ${f.y.toFixed(2)}`).join('\n');
+        
+        navigator.clipboard.writeText(textoCoords).then(() => {
+            alert(`Coordenadas de ${listaFurosCustom.length} furo(s) copiadas para a área de transferência!`);
+        }).catch(() => {
+            let areaTemp = document.createElement("textarea");
+            areaTemp.value = textoCoords;
+            document.body.appendChild(areaTemp);
+            areaTemp.select();
+            document.execCommand("copy");
+            document.body.removeChild(areaTemp);
+            alert(`Coordenadas de ${listaFurosCustom.length} furo(s) copiadas!`);
+        });
+    }
+
+    function obterParametrosBrocaAtiva() {
+        return {
+            t: parseInt(document.getElementById('furo_t').value) || 1,
+            diam: parseFloat(document.getElementById('furo_diam').value) || 5,
+            rpm: parseInt(document.getElementById('furo_rpm').value) || 1000,
+            avanco: parseInt(document.getElementById('furo_avanco').value) || 100,
+            zFinal: Math.abs(parseFloat(document.getElementById('furo_zfinal').value) || 10),
+            qPasse: Math.abs(parseFloat(document.getElementById('furo_qpasse').value) || 2)
+        };
+    }
+
+    function adicionarFuroManual() {
+        const x = parseFloat(document.getElementById('add_x').value) || 0;
+        const y = parseFloat(document.getElementById('add_y').value) || 0;
+        const broca = obterParametrosBrocaAtiva();
+
+        listaFurosCustom.push({x, y, ...broca});
+        renderizarTabelaFuros();
+        atualizarSimulador();
+    }
+
+    function gerarMalhaFuros() {
+        const tipo = document.getElementById('tipo_padrao_furo').value;
+        const colunas = parseInt(document.getElementById('malha_colunas').value) || 1;
+        const linhas = parseInt(document.getElementById('malha_linhas').value) || 1;
+        const distX = parseFloat(document.getElementById('malha_distX').value) || 0;
+        const distY = parseFloat(document.getElementById('malha_distY').value) || 0;
+        const broca = obterParametrosBrocaAtiva();
+
+        const inicioX = -((colunas - 1) * distX) / 2;
+        const inicioY = -((linhas - 1) * distY) / 2;
+
+        for (let l = 0; l < linhas; l++) {
+            for (let c = 0; c < colunas; c++) {
+                let posX = inicioX + (c * distX);
+                let posY = inicioY + (l * distY);
+
+                if (tipo === 'TRIANGULAR' && (l % 2 !== 0)) {
+                    posX += (distX / 2);
+                }
+
+                listaFurosCustom.push({x: posX, y: posY, ...broca});
+            }
+        }
+        renderizarTabelaFuros();
+        atualizarSimulador();
+    }
+
+    function gerarPadraoFlange() {
+        const qtd = parseInt(document.getElementById('pcd_qtd').value) || 0;
+        const raio = parseFloat(document.getElementById('pcd_raio').value) || 0;
+        const angInicial = parseFloat(document.getElementById('pcd_ang').value) || 0;
+
+        if (qtd <= 0) return;
+        const broca = obterParametrosBrocaAtiva();
+
+        const passoAng = 360 / qtd;
+        for (let i = 0; i < qtd; i++) {
+            let anguloRad = (angInicial + (i * passoAng)) * (Math.PI / 180);
+            let posX = raio * Math.cos(anguloRad);
+            let posY = raio * Math.sin(anguloRad);
+            listaFurosCustom.push({x: posX, y: posY, ...broca});
+        }
+        renderizarTabelaFuros();
+        atualizarSimulador();
+    }
+
+    function carregarMalhaPersonalizada() {
+        const texto = document.getElementById('txt_coords_projeto').value;
+        const linhas = texto.split('\n');
+        const broca = obterParametrosBrocaAtiva();
+        let adicionados = 0;
+
+        linhas.forEach(linha => {
+            const partes = linha.split(/[,;\s\t]+/);
+            if (partes.length >= 2) {
+                const x = parseFloat(partes[0]);
+                const y = parseFloat(partes[1]);
+                if (!isNaN(x) && !isNaN(y)) {
+                    listaFurosCustom.push({x, y, ...broca});
+                    adicionados++;
+                }
+            }
+        });
+
+        if (adicionados > 0) {
+            renderizarTabelaFuros();
+            document.getElementById('txt_coords_projeto').value = '';
+            atualizarSimulador();
+        } else {
+            alert("Nenhuma coordenada válida encontrada. Use o formato: X, Y por linha.");
+        }
+    }
+
+    function removerFuro(index) {
+        listaFurosCustom.splice(index, 1);
+        renderizarTabelaFuros();
+        atualizarSimulador();
+    }
+
+    function limparTodosFuros() {
+        listaFurosCustom = [];
+        renderizarTabelaFuros();
+        atualizarSimulador();
+    }
+
+    function validarZAproximacao(zAprox, zInicial, elementoNome) {
+        if (parseFloat(zAprox) <= parseFloat(zInicial)) {
+            alert(`ERRO DE SEGURANÇA NO ${elementoNome}:\n\nO Z de Segurança (${zAprox} mm) deve ser MAIOR do que o Z Inicial (${zInicial} mm) para evitar colisão!`);
+            return false;
+        }
+        return true;
+    }
+
+    function obterCentrosCavidades() {
+        const modo = document.getElementById('cav_modoPosicao').value;
+        let listaCentros = [];
+
+        if (modo === 'UNICA') {
+            const centroX = parseFloat(document.getElementById('cav_centroX').value) || 0;
+            const centroY = parseFloat(document.getElementById('cav_centroY').value) || 0;
+            listaCentros.push({ x: centroX, y: centroY });
+        } else {
+            const colunas = parseInt(document.getElementById('cav_colunas').value) || 1;
+            const linhas = parseInt(document.getElementById('cav_linhas').value) || 1;
+            const distX = parseFloat(document.getElementById('cav_distX').value) || 0;
+            const distY = parseFloat(document.getElementById('cav_distY').value) || 0;
+
+            const inicioX = -((colunas - 1) * distX) / 2;
+            const inicioY = -((linhas - 1) * distY) / 2;
+
+            for (let l = 0; l < linhas; l++) {
+                for (let c = 0; c < colunas; c++) {
+                    listaCentros.push({
+                        x: inicioX + (c * distX),
+                        y: inicioY + (l * distY)
+                    });
+                }
+            }
+        }
+        return listaCentros;
+    }
+
+    function validarCavidade() {
+        const dimX = parseFloat(document.getElementById('cav_dimX').value) || 0;
+        const dimY = parseFloat(document.getElementById('cav_dimY').value) || 0;
+        const alivioOffX = parseFloat(document.getElementById('cav_alivioOffX').value) || 0;
+        const alivioOffY = parseFloat(document.getElementById('cav_alivioOffY').value) || 0;
+
+        const fresaDiam = parseFloat(document.getElementById('cav_fresaDiam').value) || 0;
+        const acabDiam = parseFloat(document.getElementById('cav_acabDiam').value) || 0;
+
+        const execAlivio = document.getElementById('cav_execAlivio').checked;
+        const execContorno = document.getElementById('cav_execContornoRaio').checked;
+
+        const statusBox = document.getElementById('statusCavidade');
+        const btn = document.getElementById('btnGerarCavidade');
+
+        if (fresaDiam >= dimX || fresaDiam >= dimY) {
+            statusBox.className = "status-box error";
+            statusBox.innerHTML = `ERRO: Diâmetro da fresa de desbaste (${fresaDiam} mm) deve ser menor que as dimensões da cavidade (${dimX}x${dimY} mm)!`;
+            if (btn) btn.disabled = true;
+            return false;
+        }
+
+        if (execContorno && acabDiam >= fresaDiam) {
+            statusBox.className = "status-box error";
+            statusBox.innerHTML = `ERRO: Diâmetro da fresa de acabamento (${acabDiam} mm) deve ser MENOR que a fresa de desbaste (${fresaDiam} mm) para reduzir o raio dos cantos!`;
+            if (btn) btn.disabled = true;
+            return false;
+        }
+
+        if (execAlivio) {
+            if (listaBrocasAlivio.length === 0) {
+                statusBox.className = "status-box error";
+                statusBox.innerHTML = `ERRO: Cadastre pelo menos uma broca na tabela de alívio!`;
+                if (btn) btn.disabled = true;
+                return false;
+            }
+
+            let maiorBroca = listaBrocasAlivio[listaBrocasAlivio.length - 1];
+            let brocaDiam = maiorBroca.diam;
+
+            const minPermitidoX = -(dimX / 2) + (brocaDiam / 2);
+            const maxPermitidoX = (dimX / 2) - (brocaDiam / 2);
+            const minPermitidoY = -(dimY / 2) + (brocaDiam / 2);
+            const maxPermitidoY = (dimY / 2) - (brocaDiam / 2);
+
+            if (alivioOffX < minPermitidoX || alivioOffX > maxPermitidoX || alivioOffY < minPermitidoY || alivioOffY > maxPermitidoY) {
+                statusBox.className = "status-box error";
+                statusBox.innerHTML = `ERRO: Offset do alívio (${alivioOffX}, ${alivioOffY}) ultrapassa os limites internos da cavidade com a broca maior Ø${brocaDiam}mm!`;
+                if (btn) btn.disabled = true;
+                return false;
+            }
+        }
+
+        const centros = obterCentrosCavidades();
+        let msg = `OK: ${centros.length} cavidade(s) ${dimX}x${dimY}mm válida(s).`;
+        if (execAlivio) msg += ` Alívio com ${listaBrocasAlivio.length} broca(s).`;
+        if (execContorno) msg += ` Contorno com Ø${acabDiam}mm.`;
+
+        statusBox.className = "status-box ok";
+        statusBox.innerHTML = msg;
+        if (btn) btn.disabled = false;
+        return true;
+    }
+
+    // --- FUNÇÕES GERADORAS DE CÓDIGO NO PADRÃO CNC REAL ---
+
+    function obterBlocoFaceamento(zeroPeca, oleo, useM01) {
+        const compX = parseFloat(document.getElementById('f_compX').value);
+        const largY = parseFloat(document.getElementById('f_largY').value);
+        const numT = parseInt(document.getElementById('f_numT').value);
+        const diam = parseFloat(document.getElementById('f_diam').value);
+        const rpm = parseInt(document.getElementById('f_rpm').value);
+        const avanco = parseInt(document.getElementById('f_avanco').value);
+
+        const zAprox = parseFloat(document.getElementById('f_zAprox').value);
+        const zInicial = parseFloat(document.getElementById('f_zInicial').value);
+        const zPasse = Math.abs(parseFloat(document.getElementById('f_zPasse').value));
+        const zFinal = parseFloat(document.getElementById('f_zFinal').value);
+
+        if (!validarZAproximacao(zAprox, zInicial, "FACEAMENTO")) return null;
+
+        const passoY = diam * 0.6;
+
+        let gcode = `(INICIO-DA-TAREFA-FACEAMENTO)\n`;
+        gcode += `${zeroPeca}G90G21G17\n`;
+        gcode += `T${numT}M6\n`;
+        if (useM01) gcode += `M01\n`;
+        gcode += `G43H${numT}G0Z100\n`;
+        gcode += `S${rpm}M3\n`;
+        gcode += `G52X-${(compX/2).toFixed(2)}Y-${(largY/2).toFixed(2)}\n`;
+        gcode += `X-${diam.toFixed(1)}Y0\n`;
+        gcode += `Z${(zInicial + 1).toFixed(2)}\n`;
+
+        let zAtual = zInicial;
+        let contadorPasse = 1;
+
+        while (zAtual >= zFinal) {
+            gcode += `N${contadorPasse}\n`;
+            gcode += `G1F${avanco}Y0\n`;
+            gcode += `Z${zAtual.toFixed(2)}\n`;
+            gcode += `${oleo}\n`;
+
+            let posicaoY = 0.0;
+            let direcaoX = true;
+
+            while (posicaoY <= largY) {
+                if (direcaoX) {
+                    gcode += `X${(compX + diam).toFixed(2)}\n`;
+                } else {
+                    gcode += `X-${diam.toFixed(2)}\n`;
+                }
+
+                posicaoY += passoY;
+                if (posicaoY <= largY) {
+                    gcode += `Y${posicaoY.toFixed(2)}\n`;
+                } else {
+                    if ((posicaoY - passoY) < largY) {
+                        gcode += `Y${largY.toFixed(2)}\n`;
+                        direcaoX = !direcaoX;
+                        if (direcaoX) {
+                            gcode += `X${(compX + diam).toFixed(2)}\n`;
+                        } else {
+                            gcode += `X-${diam.toFixed(2)}\n`;
+                        }
+                    }
+                }
+                direcaoX = !direcaoX;
+            }
+
+            gcode += `G91Z5\n`;
+            gcode += `G90\n`;
+            gcode += `G0X-${diam.toFixed(2)}Y0\n`;
+
+            if (zAtual === zFinal) break;
+
+            zAtual = zAtual - zPasse;
+            if (zAtual < zFinal) zAtual = zFinal;
+            contadorPasse++;
+        }
+
+        gcode += `G0Z200M9\n`;
+        gcode += `M05\n`;
+        return gcode;
+    }
+
+    function obterBlocoContorno(zeroPeca, oleo, useM01) {
+        const compX = parseFloat(document.getElementById('c_compX').value);
+        const largY = parseFloat(document.getElementById('c_largY').value);
+        const numT = parseInt(document.getElementById('c_numTDesb').value);
+        const diam = parseFloat(document.getElementById('c_diamDesb').value);
+        const rpm = parseInt(document.getElementById('c_rpmDesb').value);
+        const avanco = parseInt(document.getElementById('c_avancoDesb').value);
+        const sobremetal = parseFloat(document.getElementById('c_sobremetal').value);
+
+        const execAcab = document.getElementById('c_execAcab').value;
+        const numTAcab = parseInt(document.getElementById('c_numTAcab').value);
+        const diamAcab = parseFloat(document.getElementById('c_diamAcab').value);
+        const rpmAcab = parseInt(document.getElementById('c_rpmAcab').value);
+        const avancoAcab = parseInt(document.getElementById('c_avancoAcab').value);
+
+        const zAprox = parseFloat(document.getElementById('c_zAprox').value);
+        const zInicial = parseFloat(document.getElementById('c_zInicial').value);
+        const zPasse = Math.abs(parseFloat(document.getElementById('c_zPasse').value));
+        const zFinalAbs = Math.abs(parseFloat(document.getElementById('c_zFinal').value));
+
+        if (!validarZAproximacao(zAprox, zInicial, "CONTORNO")) return null;
+
+        let gcode = `(INICIO-DA-TAREFA-CONT.)\n`;
+        gcode += `T${numT}M6\n`;
+        if (useM01) gcode += `M01\n`;
+        gcode += `G43H${numT}G0Z150\n`;
+        gcode += `S${rpm}M3\n`;
+        gcode += `G52X-${(compX/2).toFixed(2)}Y-${(largY/2).toFixed(2)}\n`;
+        gcode += `X-${(diam + 10).toFixed(2)}Y-${(diam/2).toFixed(2)}\n`;
+        gcode += `Z${(zInicial + 1).toFixed(2)}F${avanco}\n`;
+        gcode += `${oleo}\n`;
+        gcode += `G1X-${(diam + 10).toFixed(2)}\n`;
+
+        let zAtual = zInicial;
+
+        while (zAtual < zFinalAbs) {
+            let zProximo = zAtual + zPasse;
+            if (zProximo > zFinalAbs) zProximo = zFinalAbs;
+
+            let dz = (zProximo - zAtual) / 4;
+
+            gcode += `G1Z-${zAtual.toFixed(2)}\n`;
+            gcode += `X${(compX + sobremetal + diam/2).toFixed(2)}Z-${(zAtual + dz * 1).toFixed(3)}\n`;
+            gcode += `Y${(largY + sobremetal + diam/2).toFixed(2)}Z-${(zAtual + dz * 2).toFixed(3)}\n`;
+            gcode += `X-${(sobremetal + diam/2).toFixed(2)}Z-${(zAtual + dz * 3).toFixed(3)}\n`;
+            gcode += `Y-${(sobremetal + diam/2).toFixed(2)}Z-${zProximo.toFixed(3)}\n`;
+
+            zAtual = zProximo;
+        }
+
+        gcode += `X${(compX + sobremetal + diam/2).toFixed(2)}\n`;
+        gcode += `Y${(largY + sobremetal + diam/2).toFixed(2)}\n`;
+        gcode += `X-${(sobremetal + diam/2).toFixed(2)}\n`;
+        gcode += `Y-${(sobremetal + diam/2).toFixed(2)}\n`;
+
+        gcode += `G0Z150\n`;
+        gcode += `M05M9\n\n`;
+
+        if (execAcab === 'SIM') {
+            gcode += `(INICIO-DE-TAREFA-ACAB.CONT.)\n`;
+            gcode += `T${numTAcab}M6\n`;
+            if (useM01) gcode += `M01\n`;
+            gcode += `G43H${numTAcab}G0Z150\n`;
+            gcode += `S${rpmAcab}M3\n`;
+            gcode += `G52X-${(compX/2).toFixed(2)}Y-${(largY/2).toFixed(2)}\n`;
+            gcode += `X-${(diamAcab + 10).toFixed(2)}Y-${(diamAcab/2).toFixed(2)}\n`;
+            gcode += `Z${(zInicial + 1).toFixed(2)}F${avancoAcab}\n`;
+            gcode += `${oleo}\n`;
+            gcode += `G1X-${(diamAcab + 10).toFixed(2)}\n`;
+
+            let zAtualAcab = zInicial;
+            let zPasseAcab = zPasse / 2;
+
+            while (zAtualAcab < zFinalAbs) {
+                let zProximo = zAtualAcab + zPasseAcab;
+                if (zProximo > zFinalAbs) zProximo = zFinalAbs;
+
+                let dz = (zProximo - zAtualAcab) / 4;
+
+                gcode += `G1Z-${zAtualAcab.toFixed(2)}\n`;
+                gcode += `X${(compX + diamAcab/2).toFixed(2)}Z-${(zAtualAcab + dz * 1).toFixed(3)}\n`;
+                gcode += `Y${(largY + diamAcab/2).toFixed(2)}Z-${(zAtualAcab + dz * 2).toFixed(3)}\n`;
+                gcode += `X-${(diamAcab/2).toFixed(2)}Z-${(zAtualAcab + dz * 3).toFixed(3)}\n`;
+                gcode += `Y-${(diamAcab/2).toFixed(2)}Z-${zProximo.toFixed(3)}\n`;
+
+                zAtualAcab = zProximo;
+            }
+
+            gcode += `X${(compX + diamAcab/2).toFixed(2)}\n`;
+            gcode += `Y${(largY + diamAcab/2).toFixed(2)}\n`;
+            gcode += `X-${(diamAcab/2).toFixed(2)}\n`;
+            gcode += `Y-${(diamAcab/2).toFixed(2)}\n`;
+
+            gcode += `G0Z150\n`;
+            gcode += `M05M9\n\n`;
+        }
+
+        return gcode;
+    }
+
+    function obterBlocoMatriz(zeroPeca, oleo, useM01) {
+        if (!validarMatriz()) return null;
+
+        const colunas = parseInt(document.getElementById('m_colunas').value);
+        const linhas = parseInt(document.getElementById('m_linhas').value);
+        const tamX = parseFloat(document.getElementById('m_tamX').value);
+        const tamY = parseFloat(document.getElementById('m_tamY').value);
+        const canal = parseFloat(document.getElementById('m_canal').value);
+
+        const numT = parseInt(document.getElementById('m_numT').value);
+        const diam = parseFloat(document.getElementById('m_diam').value);
+        const rpm = parseInt(document.getElementById('m_rpm').value);
+        const avanco = parseInt(document.getElementById('m_avanco').value);
+        const sobremetal = parseFloat(document.getElementById('m_sobremetal').value);
+
+        const execAcab = document.getElementById('m_execAcab').value;
+        const numTAcab = parseInt(document.getElementById('m_numTAcab').value);
+        const diamAcab = parseFloat(document.getElementById('m_diamAcab').value);
+        const rpmAcab = parseInt(document.getElementById('m_rpmAcab').value);
+        const avancoAcab = parseInt(document.getElementById('m_avancoAcab').value);
+
+        const zAprox = parseFloat(document.getElementById('m_zAprox').value);
+        const zInicial = parseFloat(document.getElementById('m_zInicial').value);
+        const zPasse = Math.abs(parseFloat(document.getElementById('m_zPasse').value));
+        const zFinalAbs = Math.abs(parseFloat(document.getElementById('m_zFinal').value));
+
+        if (!validarZAproximacao(zAprox, zInicial, "MATRIZ DE ILHAS")) return null;
+
+        let gcode = `(INICIO-DA-TAREFA-MATRIZ-ILHAS)\n`;
+        gcode += `T${numT}M6\n`;
+        if (useM01) gcode += `M01\n`;
+        gcode += `G43H${numT}G0Z150\n`;
+        gcode += `S${rpm}M3\n`;
+        gcode += `${oleo}\n`;
+
+        const larguraTotalMatrizX = (colunas * tamX) + ((colunas - 1) * canal);
+        const larguraTotalMatrizY = (linhas * tamY) + ((linhas - 1) * canal);
+
+        const centroInicialX = -(larguraTotalMatrizX / 2) + (tamX / 2);
+        const centroInicialY = -(larguraTotalMatrizY / 2) + (tamY / 2);
+
+        const passoX = tamX + canal;
+        const passoY = tamY + canal;
+
+        for (let l = 0; l < linhas; l++) {
+            for (let c = 0; c < colunas; c++) {
+                let centroX = centroInicialX + (c * passoX);
+                let centroY = centroInicialY + (l * passoY);
+
+                let minX = centroX - (tamX / 2) - sobremetal - (diam / 2);
+                let maxX = centroX + (tamX / 2) + sobremetal + (diam / 2);
+                let minY = centroY - (tamY / 2) - sobremetal - (diam / 2);
+                let maxY = centroY + (tamY / 2) + sobremetal + (diam / 2);
+
+                let entradaX = minX - (diam / 2);
+                let entradaY = minY;
+
+                gcode += `G0X${entradaX.toFixed(2)}Y${entradaY.toFixed(2)}\n`;
+                gcode += `G0Z${zAprox.toFixed(1)}\n`;
+
+                let zAtual = zInicial;
+
+                while (zAtual < zFinalAbs) {
+                    let zProximo = zAtual + zPasse;
+                    if (zProximo > zFinalAbs) zProximo = zFinalAbs;
+
+                    let dz = (zProximo - zAtual) / 4;
+
+                    gcode += `G1X${maxX.toFixed(2)}Z-${(zAtual + dz * 1).toFixed(3)}F${avanco}\n`;
+                    gcode += `Y${maxY.toFixed(2)}Z-${(zAtual + dz * 2).toFixed(3)}\n`;
+                    gcode += `X${minX.toFixed(2)}Z-${(zAtual + dz * 3).toFixed(3)}\n`;
+                    gcode += `Y${minY.toFixed(2)}Z-${zProximo.toFixed(3)}\n`;
+
+                    zAtual = zProximo;
+                }
+
+                gcode += `X${maxX.toFixed(2)}\n`;
+                gcode += `Y${maxY.toFixed(2)}\n`;
+                gcode += `X${minX.toFixed(2)}\n`;
+                gcode += `Y${minY.toFixed(2)}\n`;
+
+                gcode += `G0Z${zAprox.toFixed(1)}\n`;
+            }
+        }
+
+        gcode += `G0Z150\n`;
+        gcode += `M05M9\n\n`;
+
+        if (execAcab === 'SIM') {
+            gcode += `(INICIO-DA-TAREFA-ACAB.MATRIZ)\n`;
+            gcode += `T${numTAcab}M6\n`;
+            if (useM01) gcode += `M01\n`;
+            gcode += `G43H${numTAcab}G0Z150\n`;
+            gcode += `S${rpmAcab}M3\n`;
+            gcode += `${oleo}\n`;
+
+            for (let l = 0; l < linhas; l++) {
+                for (let c = 0; c < colunas; c++) {
+                    let centroX = centroInicialX + (c * passoX);
+                    let centroY = centroInicialY + (l * passoY);
+
+                    let minX = centroX - (tamX / 2) - (diamAcab / 2);
+                    let maxX = centroX + (tamX / 2) + (diamAcab / 2);
+                    let minY = centroY - (tamY / 2) - (diamAcab / 2);
+                    let maxY = centroY + (tamY / 2) + (diamAcab / 2);
+
+                    let entradaX = minX - (diamAcab / 2);
+                    let entradaY = minY;
+
+                    gcode += `G0X${entradaX.toFixed(2)}Y${entradaY.toFixed(2)}\n`;
+                    gcode += `G0Z${zAprox.toFixed(1)}\n`;
+
+                    let zAtual = zInicial;
+                    let zPasseAcab = zPasse / 2;
+
+                    while (zAtual < zFinalAbs) {
+                        let zProximo = zAtual + zPasseAcab;
+                        if (zProximo > zFinalAbs) zProximo = zFinalAbs;
+
+                        let dz = (zProximo - zAtual) / 4;
+
+                        gcode += `G1X${maxX.toFixed(2)}Z-${(zAtual + dz * 1).toFixed(3)}F${avancoAcab}\n`;
+                        gcode += `Y${maxY.toFixed(2)}Z-${(zAtual + dz * 2).toFixed(3)}\n`;
+                        gcode += `X${minX.toFixed(2)}Z-${(zAtual + dz * 3).toFixed(3)}\n`;
+                        gcode += `Y${minY.toFixed(2)}Z-${zProximo.toFixed(3)}\n`;
+
+                        zAtual = zProximo;
+                    }
+
+                    gcode += `X${maxX.toFixed(2)}\n`;
+                    gcode += `Y${maxY.toFixed(2)}\n`;
+                    gcode += `X${minX.toFixed(2)}\n`;
+                    gcode += `Y${minY.toFixed(2)}\n`;
+
+                    gcode += `G0Z${zAprox.toFixed(1)}\n`;
+                }
+            }
+
+            gcode += `G0Z150\n`;
+            gcode += `M05M9\n\n`;
+        }
+        return gcode;
+    }
+
+    function obterBlocoListaFuros(zeroPeca, oleo, useM01) {
+        if (listaFurosCustom.length === 0) {
+            alert("Sua lista de furos personalizada está vazia! Adicione furos na Aba 4.");
+            return null;
+        }
+
+        const zAprox = parseFloat(document.getElementById('lf_zAprox').value);
+        const zInicial = parseFloat(document.getElementById('lf_zInicial').value);
+
+        if (!validarZAproximacao(zAprox, zInicial, "LISTA DE FUROS")) return null;
+
+        let gruposBrocas = {};
+        listaFurosCustom.forEach(furo => {
+            if (!gruposBrocas[furo.t]) {
+                gruposBrocas[furo.t] = [];
+            }
+            gruposBrocas[furo.t].push(furo);
+        });
+
+        let gcode = `(INICIO-DA-TAREFA-FURACAO-G83)\n`;
+
+        for (let numT in gruposBrocas) {
+            let furosDoGrupo = gruposBrocas[numT];
+            let refInfo = furosDoGrupo[0];
+
+            gcode += `T${numT}M6\n`;
+            if (useM01) gcode += `M01\n`;
+            gcode += `G43H${numT}G0Z150\n`;
+            gcode += `S${refInfo.rpm}M3\n`;
+            gcode += `${oleo}\n`;
+
+            let primeiro = true;
+            furosDoGrupo.forEach(furo => {
+                if (primeiro) {
+                    gcode += `G0X${furo.x.toFixed(2)}Y${furo.y.toFixed(2)}\n`;
+                    gcode += `G0Z${zAprox.toFixed(1)}\n`;
+                    gcode += `G83Z-${furo.zFinal.toFixed(2)}R${zAprox.toFixed(1)}Q${furo.qPasse.toFixed(2)}F${furo.avanco}\n`;
+                    primeiro = false;
+                } else {
+                    gcode += `X${furo.x.toFixed(2)}Y${furo.y.toFixed(2)}\n`;
+                }
+            });
+
+            gcode += `G80\n`;
+            gcode += `G0Z150\n`;
+            gcode += `M05M9\n\n`;
+        }
+
+        return gcode;
+    }
+
+    function obterBlocoCavidade(zeroPeca, oleo, useM01) {
+        if (!validarCavidade()) return null;
+
+        const dimX = parseFloat(document.getElementById('cav_dimX').value);
+        const dimY = parseFloat(document.getElementById('cav_dimY').value);
+        const centros = obterCentrosCavidades();
+
+        const execAlivio = document.getElementById('cav_execAlivio').checked;
+        const alivioOffX = parseFloat(document.getElementById('cav_alivioOffX').value);
+        const alivioOffY = parseFloat(document.getElementById('cav_alivioOffY').value);
+
+        const fresaT = parseInt(document.getElementById('cav_fresaT').value);
+        const fresaDiam = parseFloat(document.getElementById('cav_fresaDiam').value);
+        const fresaRpm = parseInt(document.getElementById('cav_fresaRpm').value);
+        const fresaAvanco = parseInt(document.getElementById('cav_fresaAvanco').value);
+        const passoPct = parseFloat(document.getElementById('cav_passoLateral').value);
+
+        const execContorno = document.getElementById('cav_execContornoRaio').checked;
+        const acabT = parseInt(document.getElementById('cav_acabT').value);
+        const acabDiam = parseFloat(document.getElementById('cav_acabDiam').value);
+        const acabRpm = parseInt(document.getElementById('cav_acabRpm').value);
+        const acabAvanco = parseInt(document.getElementById('cav_acabAvanco').value);
+        const sobremetalParedes = parseFloat(document.getElementById('cav_sobremetalParedes').value);
+
+        const zAprox = parseFloat(document.getElementById('cav_zAprox').value);
+        const zInicial = parseFloat(document.getElementById('cav_zInicial').value);
+        const zPasse = Math.abs(parseFloat(document.getElementById('cav_zPasse').value));
+        const zFinalAbs = Math.abs(parseFloat(document.getElementById('cav_zFinal').value));
+
+        if (!validarZAproximacao(zAprox, zInicial, "CAVIDADE COM ALÍVIO")) return null;
+
+        let gcode = `(INICIO-DA-TAREFA-CAVIDADE-RETA)\n`;
+
+        if (execAlivio) {
+            listaBrocasAlivio.forEach((broca) => {
+                gcode += `T${broca.t}M6\n`;
+                if (useM01) gcode += `M01\n`;
+                gcode += `G43H${broca.t}G0Z150\n`;
+                gcode += `S${broca.rpm}M3\n`;
+                gcode += `${oleo}\n`;
+
+                let primeiroFuro = true;
+                centros.forEach(c => {
+                    let ptX = c.x + alivioOffX;
+                    let ptY = c.y + alivioOffY;
+
+                    if (primeiroFuro) {
+                        gcode += `G0X${ptX.toFixed(2)}Y${ptY.toFixed(2)}\n`;
+                        gcode += `G0Z${zAprox.toFixed(1)}\n`;
+                        gcode += `G83Z-${zFinalAbs.toFixed(2)}R${zAprox.toFixed(1)}Q${broca.q.toFixed(2)}F${broca.avanco}\n`;
+                        primeiroFuro = false;
+                    } else {
+                        gcode += `X${ptX.toFixed(2)}Y${ptY.toFixed(2)}\n`;
+                    }
+                });
+
+                gcode += `G80\n`;
+                gcode += `G0Z150\n`;
+                gcode += `M05M9\n\n`;
+            });
+        }
+
+        gcode += `T${fresaT}M6\n`;
+        if (useM01) gcode += `M01\n`;
+        gcode += `G43H${fresaT}G0Z150\n`;
+        gcode += `S${fresaRpm}M3\n`;
+        gcode += `${oleo}\n`;
+
+        let folgaDesbaste = execContorno ? sobremetalParedes : 0.0;
+        let passoLatMM = fresaDiam * passoPct;
+
+        centros.forEach((centro) => {
+            let centroX = centro.x;
+            let centroY = centro.y;
+            let pontoMergulhoX = execAlivio ? (centroX + alivioOffX) : centroX;
+            let pontoMergulhoY = execAlivio ? (centroY + alivioOffY) : centroY;
+
+            let minBoundaryX = centroX - (dimX / 2) + (fresaDiam / 2) + folgaDesbaste;
+            let maxBoundaryX = centroX + (dimX / 2) - (fresaDiam / 2) - folgaDesbaste;
+            let minBoundaryY = centroY - (dimY / 2) + (fresaDiam / 2) + folgaDesbaste;
+            let maxBoundaryY = centroY + (dimY / 2) - (fresaDiam / 2) - folgaDesbaste;
+
+            let zAtual = zInicial;
+
+            while (zAtual < zFinalAbs) {
+                let zProximo = zAtual + zPasse;
+                if (zProximo > zFinalAbs) zProximo = zFinalAbs;
+
+                gcode += `G0X${pontoMergulhoX.toFixed(2)}Y${pontoMergulhoY.toFixed(2)}\n`;
+                gcode += `G0Z${zAprox.toFixed(1)}\n`;
+                gcode += `G1Z-${zProximo.toFixed(2)}F${fresaAvanco}\n`;
+
+                let currMinX = pontoMergulhoX;
+                let currMaxX = pontoMergulhoX;
+                let currMinY = pontoMergulhoY;
+                let currMaxY = pontoMergulhoY;
+
+                let expansaoConcluida = false;
+
+                while (!expansaoConcluida) {
+                    currMinX -= passoLatMM;
+                    currMaxX += passoLatMM;
+                    currMinY -= passoLatMM;
+                    currMaxY += passoLatMM;
+
+                    if (currMinX < minBoundaryX) currMinX = minBoundaryX;
+                    if (currMaxX > maxBoundaryX) currMaxX = maxBoundaryX;
+                    if (currMinY < minBoundaryY) currMinY = minBoundaryY;
+                    if (currMaxY > maxBoundaryY) currMaxY = maxBoundaryY;
+
+                    gcode += `G1X${currMaxX.toFixed(2)}Y${currMinY.toFixed(2)}\n`;
+                    gcode += `Y${currMaxY.toFixed(2)}\n`;
+                    gcode += `X${currMinX.toFixed(2)}\n`;
+                    gcode += `Y${currMinY.toFixed(2)}\n`;
+                    gcode += `X${currMaxX.toFixed(2)}\n`;
+
+                    if (currMinX === minBoundaryX && currMaxX === maxBoundaryX &&
+                        currMinY === minBoundaryY && currMaxY === maxBoundaryY) {
+                        expansaoConcluida = true;
+                    }
+                }
+
+                gcode += `G0Z${zAprox.toFixed(1)}\n`;
+                zAtual = zProximo;
+            }
+        });
+
+        gcode += `G0Z150\n`;
+        gcode += `M05M9\n\n`;
+
+        if (execContorno) {
+            gcode += `(INICIO-DA-TAREFA-ACAB.CAVIDADE)\n`;
+            gcode += `T${acabT}M6\n`;
+            if (useM01) gcode += `M01\n`;
+            gcode += `G43H${acabT}G0Z150\n`;
+            gcode += `S${acabRpm}M3\n`;
+            gcode += `${oleo}\n`;
+
+            centros.forEach((centro) => {
+                let centroX = centro.x;
+                let centroY = centro.y;
+                let pontoMergulhoX = execAlivio ? (centroX + alivioOffX) : centroX;
+                let pontoMergulhoY = execAlivio ? (centroY + alivioOffY) : centroY;
+
+                let contornoMinX = centroX - (dimX / 2) + (acabDiam / 2);
+                let contornoMaxX = centroX + (dimX / 2) - (acabDiam / 2);
+                let contornoMinY = centroY - (dimY / 2) + (acabDiam / 2);
+                let contornoMaxY = centroY + (dimY / 2) - (acabDiam / 2);
+
+                let zAtual = zInicial;
+
+                while (zAtual < zFinalAbs) {
+                    let zProximo = zAtual + zPasse;
+                    if (zProximo > zFinalAbs) zProximo = zFinalAbs;
+
+                    gcode += `G0X${pontoMergulhoX.toFixed(2)}Y${pontoMergulhoY.toFixed(2)}\n`;
+                    gcode += `G0Z${zAprox.toFixed(1)}\n`;
+                    gcode += `G1Z-${zProximo.toFixed(2)}F${acabAvanco}\n`;
+
+                    gcode += `G1X${contornoMaxX.toFixed(2)}Y${contornoMinY.toFixed(2)}\n`;
+                    gcode += `Y${contornoMaxY.toFixed(2)}\n`;
+                    gcode += `X${contornoMinX.toFixed(2)}\n`;
+                    gcode += `Y${contornoMinY.toFixed(2)}\n`;
+                    gcode += `X${contornoMaxX.toFixed(2)}\n`;
+
+                    gcode += `G0Z${zAprox.toFixed(1)}\n`;
+                    zAtual = zProximo;
+                }
+            });
+
+            gcode += `G0Z150\n`;
+            gcode += `M05M9\n\n`;
+        }
+
+        return gcode;
+    }
+
+    // --- PROGRAMA COMBINADO INTEGRADO ---
+    function gerarProgramaCombinado() {
+        const incFace = document.getElementById('chk_faceamento').checked;
+        const incCont = document.getElementById('chk_contorno').checked;
+        const incMatr = document.getElementById('chk_matriz').checked;
+        const incList = document.getElementById('chk_lista_furos').checked;
+        const incCav  = document.getElementById('chk_cavidade').checked;
+
+        if (!incFace && !incCont && !incMatr && !incList && !incCav) {
+            alert("Selecione pelo menos uma operação para gerar o programa!");
+            return;
+        }
+
+        const zeroPeca = document.getElementById('multi_zeroPeca').value;
+        const oleo = document.getElementById('multi_oleo').value;
+        const useM01 = document.getElementById('multi_useM01').checked;
+
+        let gcode = `%\nO9(PROGRAMA.REAL)\n`;
+        gcode += `#24=${zeroPeca.replace('G', '')}(PONTO.ZERO)\n\n`;
+
+        if (incFace) {
+            let bloco = obterBlocoFaceamento(zeroPeca, oleo, useM01);
+            if (bloco === null) return;
+            gcode += bloco;
+        }
+
+        if (incCont) {
+            let bloco = obterBlocoContorno(zeroPeca, oleo, useM01);
+            if (bloco === null) return;
+            gcode += bloco;
+        }
+
+        if (incMatr) {
+            let bloco = obterBlocoMatriz(zeroPeca, oleo, useM01);
+            if (bloco === null) return;
+            gcode += bloco;
+        }
+
+        if (incList) {
+            let bloco = obterBlocoListaFuros(zeroPeca, oleo, useM01);
+            if (bloco === null) return;
+            gcode += bloco;
+        }
+
+        if (incCav) {
+            let bloco = obterBlocoCavidade(zeroPeca, oleo, useM01);
+            if (bloco === null) return;
+            gcode += bloco;
+        }
+
+        gcode += `G53Y0\n`;
+        gcode += `M30\n%`;
+
+        document.getElementById('codigoGcode').value = gcode;
+        liberarBotoesAcao();
+        resetarAnimacaoSimulador();
+    }
+
+    function gerarFaceamento() {
+        document.getElementById('chk_faceamento').checked = true;
+        document.getElementById('chk_contorno').checked = false;
+        document.getElementById('chk_matriz').checked = false;
+        document.getElementById('chk_lista_furos').checked = false;
+        document.getElementById('chk_cavidade').checked = false;
+        gerarProgramaCombinado();
+    }
+
+    function gerarContornoRampa() {
+        document.getElementById('chk_faceamento').checked = false;
+        document.getElementById('chk_contorno').checked = true;
+        document.getElementById('chk_matriz').checked = false;
+        document.getElementById('chk_lista_furos').checked = false;
+        document.getElementById('chk_cavidade').checked = false;
+        gerarProgramaCombinado();
+    }
+
+    function gerarMatriz() {
+        document.getElementById('chk_faceamento').checked = false;
+        document.getElementById('chk_contorno').checked = false;
+        document.getElementById('chk_matriz').checked = true;
+        document.getElementById('chk_lista_furos').checked = false;
+        document.getElementById('chk_cavidade').checked = false;
+        gerarProgramaCombinado();
+    }
+
+    function gerarListaFurosGCode() {
+        document.getElementById('chk_faceamento').checked = false;
+        document.getElementById('chk_contorno').checked = false;
+        document.getElementById('chk_matriz').checked = false;
+        document.getElementById('chk_lista_furos').checked = true;
+        document.getElementById('chk_cavidade').checked = false;
+        gerarProgramaCombinado();
+    }
+
+    function gerarCavidadeGCode() {
+        document.getElementById('chk_faceamento').checked = false;
+        document.getElementById('chk_contorno').checked = false;
+        document.getElementById('chk_matriz').checked = false;
+        document.getElementById('chk_lista_furos').checked = false;
+        document.getElementById('chk_cavidade').checked = true;
+        gerarProgramaCombinado();
+    }
+
+    function validarMatriz() {
+        const brutoX = parseFloat(document.getElementById('m_brutoX').value) || 0;
+        const brutoY = parseFloat(document.getElementById('m_brutoY').value) || 0;
+        const colunas = parseInt(document.getElementById('m_colunas').value) || 0;
+        const linhas = parseInt(document.getElementById('m_linhas').value) || 0;
+        const tamX = parseFloat(document.getElementById('m_tamX').value) || 0;
+        const tamY = parseFloat(document.getElementById('m_tamY').value) || 0;
+        const canal = parseFloat(document.getElementById('m_canal').value) || 0;
+        const diam = parseFloat(document.getElementById('m_diam').value) || 0;
+        const zAprox = parseFloat(document.getElementById('m_zAprox').value) || 0;
+        const zInicial = parseFloat(document.getElementById('m_zInicial').value) || 0;
+
+        const statusBox = document.getElementById('statusMatriz');
+        const btn = document.getElementById('btnGerarMatriz');
+
+        if (zAprox <= zInicial) {
+            statusBox.className = "status-box error";
+            statusBox.innerHTML = `ERRO: Z Aproximação (${zAprox} mm) deve ser MAIOR que Z Inicial (${zInicial} mm)!`;
+            if (btn) btn.disabled = true;
+            return false;
+        }
+
+        if (diam > canal) {
+            statusBox.className = "status-box error";
+            statusBox.innerHTML = `ERRO: Diâmetro da fresa (${diam} mm) > canal (${canal} mm)! A ferramenta colidirá com as ilhas.`;
+            if (btn) btn.disabled = true;
+            return false;
+        }
+
+        const necX = (colunas * tamX) + ((colunas - 1) * canal) + (2 * canal);
+        const necY = (linhas * tamY) + ((linhas - 1) * canal) + (2 * canal);
+
+        if (necX > brutoX || necY > brutoY) {
+            statusBox.className = "status-box error";
+            statusBox.innerHTML = `ERRO: Bruto (${brutoX}x${brutoY} mm) é MENOR que o necessário (${necX.toFixed(1)}x${necY.toFixed(1)} mm)!`;
+            if (btn) btn.disabled = true;
+            return false;
+        } else {
+            statusBox.className = "status-box ok";
+            statusBox.innerHTML = `OK: Matriz compatível e centralizada em X0 Y0. Área: ${necX.toFixed(1)} x ${necY.toFixed(1)} mm.`;
+            if (btn) btn.disabled = false;
+            return true;
+        }
+    }
+
+    function copiarCodigo() {
+        const copyText = document.getElementById("codigoGcode");
+        if (!copyText.value.trim()) return;
+
+        if (codigoFoiCopiado) {
+            const desejaRecopiar = confirm("Este código já foi copiado.\n\nDeseja copiá-lo novamente?");
+            if (!desejaRecopiar) return;
+        }
+
+        copyText.select();
+        document.execCommand("copy");
+        codigoFoiCopiado = true;
+        alert("Programa CNC copiado para a área de transferência!");
+    }
+
+    // --- RELATÓRIO TXT ---
+    function baixarRelatorioTXT() {
+        const incFace = document.getElementById('chk_faceamento').checked;
+        const incCont = document.getElementById('chk_contorno').checked;
+        const incMatr = document.getElementById('chk_matriz').checked;
+        const incList = document.getElementById('chk_lista_furos').checked;
+        const incCav  = document.getElementById('chk_cavidade').checked;
+
+        let ferramentasUsadas = [];
+        let operacoesResumo = [];
+        let tempoTotalMinutos = 0;
+
+        if (incFace) {
+            const t = parseInt(document.getElementById('f_numT').value);
+            const diam = parseFloat(document.getElementById('f_diam').value);
+            const zFinal = parseFloat(document.getElementById('f_zFinal').value);
+            const avanco = parseInt(document.getElementById('f_avanco').value);
+            const compX = parseFloat(document.getElementById('f_compX').value);
+            const largY = parseFloat(document.getElementById('f_largY').value);
+            const zPasse = parseFloat(document.getElementById('f_zPasse').value);
+
+            ferramentasUsadas.push({ t, diam, tipo: 'Cabeçote de Facear' });
+            let distPasse = (compX + diam * 2) * (largY / (diam * 0.6));
+            let qtdPassesZ = Math.ceil(Math.abs(zFinal) / zPasse);
+            let tempoMin = (distPasse * qtdPassesZ) / avanco;
+            tempoTotalMinutos += tempoMin;
+
+            operacoesResumo.push(`- Faceamento: Profundidade Z = ${zFinal.toFixed(1)} mm | Ferramenta T${t} (Ø${diam}mm) | Tempo ~ ${tempoMin.toFixed(2)} min`);
+        }
+
+        if (incCont) {
+            const t = parseInt(document.getElementById('c_numTDesb').value);
+            const diam = parseFloat(document.getElementById('c_diamDesb').value);
+            const zFinal = Math.abs(parseFloat(document.getElementById('c_zFinal').value));
+            const avanco = parseInt(document.getElementById('c_avancoDesb').value);
+            const compX = parseFloat(document.getElementById('c_compX').value);
+            const largY = parseFloat(document.getElementById('c_largY').value);
+            const zPasse = parseFloat(document.getElementById('c_zPasse').value);
+
+            ferramentasUsadas.push({ t, diam, tipo: 'Fresa Desbaste Contorno' });
+            let perimetro = (compX + largY) * 2;
+            let voltas = Math.ceil(zFinal / zPasse);
+            let tempoMin = (perimetro * voltas) / avanco;
+
+            if (document.getElementById('c_execAcab').value === 'SIM') {
+                const tAcab = parseInt(document.getElementById('c_numTAcab').value);
+                const diamAcab = parseFloat(document.getElementById('c_diamAcab').value);
+                const avancoAcab = parseInt(document.getElementById('c_avancoAcab').value);
+                ferramentasUsadas.push({ t: tAcab, diam: diamAcab, tipo: 'Fresa Acabamento Contorno' });
+                tempoMin += (perimetro / avancoAcab);
+            }
+
+            tempoTotalMinutos += tempoMin;
+            operacoesResumo.push(`- Contorno Externo: Profundidade Z = -${zFinal.toFixed(1)} mm | Tempo ~ ${tempoMin.toFixed(2)} min`);
+        }
+
+        if (incMatr) {
+            const tDesb = parseInt(document.getElementById('m_numT').value);
+            const diamDesb = parseFloat(document.getElementById('m_diam').value);
+            const zFinal = Math.abs(parseFloat(document.getElementById('m_zFinal').value));
+            const avancoDesb = parseInt(document.getElementById('m_avanco').value);
+            const colunas = parseInt(document.getElementById('m_colunas').value);
+            const linhas = parseInt(document.getElementById('m_linhas').value);
+
+            ferramentasUsadas.push({ t: tDesb, diam: diamDesb, tipo: 'Fresa Desbaste Ilhas' });
+            let tempoMin = ((colunas * linhas) * zFinal * 400) / avancoDesb;
+
+            if (document.getElementById('m_execAcab').value === 'SIM') {
+                const tAcab = parseInt(document.getElementById('m_numTAcab').value);
+                const diamAcab = parseFloat(document.getElementById('m_diamAcab').value);
+                ferramentasUsadas.push({ t: tAcab, diam: diamAcab, tipo: 'Fresa Acabamento Ilhas' });
+                tempoMin += 1.5;
+            }
+            tempoTotalMinutos += tempoMin;
+
+            operacoesResumo.push(`- Matriz de Ilhas (${colunas}x${linhas}): Profundidade Z = -${zFinal.toFixed(1)} mm | Tempo ~ ${tempoMin.toFixed(2)} min`);
+        }
+
+        if (incList && listaFurosCustom.length > 0) {
+            let tempoFuração = 0;
+            listaFurosCustom.forEach(furo => {
+                ferramentasUsadas.push({ t: furo.t, diam: furo.diam, tipo: 'Broca' });
+                let picaPaus = Math.ceil(furo.zFinal / furo.qPasse);
+                let distTotalMM = furo.zFinal * picaPaus;
+                tempoFuração += (distTotalMM / furo.avanco);
+            });
+            tempoTotalMinutos += tempoFuração;
+            operacoesResumo.push(`- Lista de Furações (${listaFurosCustom.length} furos): Tempo ~ ${tempoFuração.toFixed(2)} min`);
+        }
+
+        if (incCav) {
+            const centros = obterCentrosCavidades();
+            const execAlivio = document.getElementById('cav_execAlivio').checked;
+            const execContorno = document.getElementById('cav_execContornoRaio').checked;
+            const fresaT = parseInt(document.getElementById('cav_fresaT').value);
+            const fresaDiam = parseFloat(document.getElementById('cav_fresaDiam').value);
+            const acabT = parseInt(document.getElementById('cav_acabT').value);
+            const acabDiam = parseFloat(document.getElementById('cav_acabDiam').value);
+            const zFinal = Math.abs(parseFloat(document.getElementById('cav_zFinal').value));
+
+            if (execAlivio) {
+                listaBrocasAlivio.forEach(b => {
+                    ferramentasUsadas.push({ t: b.t, diam: b.diam, tipo: 'Broca Pré-Furo Alívio' });
+                });
+            }
+            ferramentasUsadas.push({ t: fresaT, diam: fresaDiam, tipo: 'Fresa Desbaste Cavidade' });
+
+            if (execContorno) {
+                ferramentasUsadas.push({ t: acabT, diam: acabDiam, tipo: 'Fresa Acabamento/Canto Cavidade' });
+            }
+
+            let tempoMin = centros.length * ((execAlivio ? listaBrocasAlivio.length * 0.8 : 0) + (zFinal * 0.3) + (execContorno ? 1.2 : 0));
+            tempoTotalMinutos += tempoMin;
+            operacoesResumo.push(`- Cavidades Retas [${centros.length} cavidade(s)] (${execAlivio ? listaBrocasAlivio.length + ' Broca(s) Alívio' : 'Sem Alívio'}${execContorno ? ' + Contorno Raio' : ''}): Profundidade Z = -${zFinal.toFixed(1)} mm | Tempo ~ ${tempoMin.toFixed(2)} min`);
+        }
+
+        let ferramentasUnicas = [];
+        let mapa = {};
+        ferramentasUsadas.forEach(f => {
+            if (!mapa[f.t]) {
+                mapa[f.t] = f;
+                ferramentasUnicas.push(f);
+            }
+        });
+
+        let txt = `==================================================\n`;
+        txt += ` RELATÓRIO DE PREPARAÇÃO E USINAGEM CNC\n`;
+        txt += ` Data: ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR')}\n`;
+        txt += `==================================================\n\n`;
+
+        txt += `1. LISTA DE FERRAMENTAS UTILIZADAS:\n`;
+        ferramentasUnicas.forEach(f => {
+            txt += `   - Ferramenta T${f.t.toString().padStart(2, '0')} | Diâmetro: ${f.diam.toFixed(1).padStart(4, ' ')} mm | Função: ${f.tipo}\n`;
+        });
+
+        txt += `\n2. RESUMO DAS OPERAÇÕES E PROFUNDIDADES:\n`;
+        operacoesResumo.forEach(op => {
+            txt += `   ${op}\n`;
+        });
+
+        txt += `\n3. TEMPO ESTIMADO DE USINAGEM:\n`;
+        txt += `   - Tempo Total Aproximado: ${tempoTotalMinutos.toFixed(2)} minutos (${Math.ceil(tempoTotalMinutos * 60)} segundos)\n`;
+        txt += `   (Obs: O tempo considera avanços de corte G1/G83 sem computar trocas manuais/rápidos G0).\n\n`;
+        txt += `==================================================\n`;
+
+        let blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        let link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'Relatorio_Preparacao_CNC.txt';
+        link.click();
+    }
+
+    window.onload = function() {
+        alternarAcabamentoMatriz();
+        alternarAcabamentoContorno();
+        alternarCamposPadrao();
+        alternarModoPosicaoCavidade();
+        alternarOpcaoAlivio();
+        alternarOpcaoContornoRaio();
+        renderizarTabelaFuros();
+        renderizarTabelaBrocasAlivio();
+        validarMatriz();
+        validarCavidade();
+        vincularEscutasSimulador();
+        atualizarSimulador();
+    };
+</script>
+
+</body>
+</html>
