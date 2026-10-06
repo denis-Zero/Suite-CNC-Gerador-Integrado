@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suíte CNC - Gerador Integrado G-Code CNC Real</title>
+    <title>Suíte CNC - Gerador Integrado G-Code CNC</title>
     <style>
         :root {
             --bg-color: #181825;
@@ -554,14 +554,15 @@
 <body>
 
 <div class="header-app">
-    <h1>Suíte CNC - Gerador Integrado CNC Real</h1>
+    <h1>Suíte CNC - Gerador Integrado CNC</h1>
     <div class="tabs-nav">
         <button class="tab-btn active" onclick="abrirAba('aba-combinado', this)">★ Multi-Operações</button>
-        <button class="tab-btn" onclick="abrirAba('aba-faceamento', this)">1. Faceamento</button>
+        <button class="tab-btn" onclick="abrirAba('aba-faceamento', this)">1. Faceamento(s)</button>
         <button class="tab-btn" onclick="abrirAba('aba-contorno', this)">2. Contorno</button>
         <button class="tab-btn" onclick="abrirAba('aba-matriz', this)">3. Matriz Ilhas</button>
         <button class="tab-btn" onclick="abrirAba('aba-lista-furos', this)">4. Lista / Padrões Furos</button>
         <button class="tab-btn" onclick="abrirAba('aba-cavidade', this)">5. Cavidades c/ Alívio</button>
+        <button class="tab-btn" onclick="abrirAba('aba-linear', this)">6. Fresagem Linear/Circ.</button>
     </div>
 </div>
 
@@ -574,7 +575,7 @@
             <h2>Seleção de Operações do Programa Único</h2>
             <div class="checkbox-group">
                 <input type="checkbox" id="chk_faceamento" checked>
-                <label for="chk_faceamento" style="margin:0; cursor:pointer; color:#fff; font-weight:bold;">1. Incluir Operação de Faceamento</label>
+                <label for="chk_faceamento" style="margin:0; cursor:pointer; color:#fff; font-weight:bold;">1. Incluir Operação(ões) de Faceamento</label>
             </div>
             <div class="checkbox-group">
                 <input type="checkbox" id="chk_contorno" checked>
@@ -586,16 +587,20 @@
             </div>
             <div class="checkbox-group">
                 <input type="checkbox" id="chk_lista_furos" checked>
-                <label for="chk_lista_furos" style="margin:0; cursor:pointer; color:#fff; font-weight:bold;">4. Incluir Furações com Brocas Específicas</label>
+                <label for="chk_lista_furos" style="margin:0; cursor:pointer; color:#fff; font-weight:bold;">4. Incluir Furações (Lista/Padrões)</label>
             </div>
             <div class="checkbox-group">
                 <input type="checkbox" id="chk_cavidade" checked>
                 <label for="chk_cavidade" style="margin:0; cursor:pointer; color:#fff; font-weight:bold;">5. Incluir Usinagem de Cavidade(s) Reta(s)</label>
             </div>
+            <div class="checkbox-group" style="border-color: var(--accent);">
+                <input type="checkbox" id="chk_linear" checked>
+                <label for="chk_linear" style="margin:0; cursor:pointer; color:var(--accent); font-weight:bold;">6. Incluir Fresagem Linear / Circular</label>
+            </div>
 
             <h2>Parâmetros Gerais do Bruto</h2>
             <div class="form-group">
-                <label for="multi_zeroPeca">Zero Peça:</label>
+                <label for="multi_zeroPeca">Zero Peça Padrão:</label>
                 <select id="multi_zeroPeca">
                     <option value="G54" selected>G54 (Centro do Bruto)</option>
                     <option value="G55">G55 (Centro do Bruto)</option>
@@ -632,9 +637,9 @@
             <button class="btn-generate" onclick="gerarProgramaCombinado()">Gerar Programa Único Combinado</button>
         </div>
 
-        <!-- ABA 1: FACEAMENTO -->
+        <!-- ABA 1: GERENCIADOR DE MÚLTIPLOS FACEAMENTOS -->
         <div id="aba-faceamento" class="tab-content">
-            <h2>Faceamento Individual</h2>
+            <h2>Gerenciador de Múltiplos Faceamentos</h2>
             <div class="form-group">
                 <label for="f_zeroPeca">Zero Peça:</label>
                 <select id="f_zeroPeca">
@@ -643,47 +648,72 @@
                     <option value="G56">G56</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label for="f_compX">Comprimento em X (mm):</label>
-                <input type="number" id="f_compX" value="250.0" step="0.1">
+            <div class="row-inputs">
+                <div class="form-group">
+                    <label for="f_compX">Comprimento X (mm):</label>
+                    <input type="number" id="f_compX" value="250.0" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="f_largY">Largura Y (mm):</label>
+                    <input type="number" id="f_largY" value="250.0" step="0.1">
+                </div>
             </div>
-            <div class="form-group">
-                <label for="f_largY">Largura em Y (mm):</label>
-                <input type="number" id="f_largY" value="250.0" step="0.1">
+            <div class="row-inputs">
+                <div class="form-group">
+                    <label for="f_numT">Ferramenta (T):</label>
+                    <input type="number" id="f_numT" value="1">
+                </div>
+                <div class="form-group">
+                    <label for="f_diam">Diâmetro (mm):</label>
+                    <input type="number" id="f_diam" value="70" step="0.1">
+                </div>
             </div>
-            <div class="form-group">
-                <label for="f_numT">Ferramenta (T):</label>
-                <input type="number" id="f_numT" value="1">
+            <div class="row-inputs">
+                <div class="form-group">
+                    <label for="f_rpm">RPM:</label>
+                    <input type="number" id="f_rpm" value="660">
+                </div>
+                <div class="form-group">
+                    <label for="f_avanco">Avanço (mm/min):</label>
+                    <input type="number" id="f_avanco" value="600">
+                </div>
             </div>
-            <div class="form-group">
-                <label for="f_diam">Diâmetro (mm):</label>
-                <input type="number" id="f_diam" value="70" step="0.1">
+            <div class="row-inputs">
+                <div class="form-group">
+                    <label for="f_zInicial">Z Inicial (mm):</label>
+                    <input type="number" id="f_zInicial" value="0.0" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="f_zPasse">Passe em Z (mm):</label>
+                    <input type="number" id="f_zPasse" value="0.5" step="0.05">
+                </div>
+                <div class="form-group">
+                    <label for="f_zFinal">Z Final (mm):</label>
+                    <input type="number" id="f_zFinal" value="-1.0" step="0.1">
+                </div>
             </div>
-            <div class="form-group">
-                <label for="f_rpm">RPM:</label>
-                <input type="number" id="f_rpm" value="660">
-            </div>
-            <div class="form-group">
-                <label for="f_avanco">Avanço (mm/min):</label>
-                <input type="number" id="f_avanco" value="600">
-            </div>
-            <div class="form-group">
-                <label for="f_zAprox">Z Aproximação / Segurança (mm):</label>
-                <input type="number" id="f_zAprox" value="5.0" step="0.1">
-            </div>
-            <div class="form-group">
-                <label for="f_zInicial">Z Inicial (mm):</label>
-                <input type="number" id="f_zInicial" value="0.0" step="0.1">
-            </div>
-            <div class="form-group">
-                <label for="f_zPasse">Passe por Camada (mm):</label>
-                <input type="number" id="f_zPasse" value="0.5" step="0.05">
-            </div>
-            <div class="form-group">
-                <label for="f_zFinal">Z Final (mm):</label>
-                <input type="number" id="f_zFinal" value="-1.0" step="0.1">
-            </div>
-            <button class="btn-generate" onclick="gerarFaceamento()">Gerar Apenas Faceamento</button>
+
+            <button class="btn-secondary" onclick="adicionarOperacaoFaceamento()">+ Adicionar Operação de Faceamento</button>
+
+            <h2>Faceamentos Cadastrados</h2>
+            <table class="table-furos">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Zero</th>
+                        <th>Dimensões</th>
+                        <th>T (Ø)</th>
+                        <th>Z Inicial ➔ Final</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoTabelaFaceamentos">
+                    <!-- Preenchido via JavaScript -->
+                </tbody>
+            </table>
+
+            <button class="btn-secondary" style="background-color: var(--danger); margin-top: 6px;" onclick="limparTodosFaceamentos()">Limpar Lista de Faceamentos</button>
+            <button class="btn-generate" onclick="gerarFaceamento()">Gerar Apenas Faceamento(s)</button>
         </div>
 
         <!-- ABA 2: CONTORNO -->
@@ -1247,6 +1277,117 @@
             <button id="btnGerarCavidade" class="btn-generate" onclick="gerarCavidadeGCode()">Gerar Código da Cavidade</button>
         </div>
 
+        <!-- ABA 6: FRESAGEM LINEAR E CIRCULAR (NOVA ABA) -->
+        <div id="aba-linear" class="tab-content">
+            <h2>Fresagem Linear e Circular (Centro Absoluto X0 Y0)</h2>
+            <p style="font-size: 0.8rem; color: #a6e3a1; margin-bottom:15px;">Todas as coordenadas digitadas aqui terão como base o centro absoluto do bruto (X0 Y0).</p>
+            
+            <div class="form-group">
+                <label for="lin_tipo">Tipo de Fresagem / Trajeto:</label>
+                <select id="lin_tipo" onchange="alternarTipoLinear()" style="font-weight: bold; color: var(--accent);">
+                    <option value="RETAX" selected>Linha Reta no Eixo X (ida e volta)</option>
+                    <option value="RETAY">Linha Reta no Eixo Y (ida e volta)</option>
+                    <option value="DIAGONAL">Linha Diagonal (X e Y simultâneos)</option>
+                    <option value="CIRCULAR">Circular (G2 / G3)</option>
+                </select>
+            </div>
+
+            <!-- OPÇÕES PARA LINHAS -->
+            <div id="bloco_linear_retas">
+                <div class="row-inputs">
+                    <div class="form-group">
+                        <label for="lin_startX">X Inicial (mm):</label>
+                        <input type="number" id="lin_startX" value="-40" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="lin_startY">Y Inicial (mm):</label>
+                        <input type="number" id="lin_startY" value="0" step="0.1">
+                    </div>
+                </div>
+                <div class="row-inputs">
+                    <div class="form-group">
+                        <label for="lin_endX">X Final (mm):</label>
+                        <input type="number" id="lin_endX" value="40" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="lin_endY">Y Final (mm):</label>
+                        <input type="number" id="lin_endY" value="0" step="0.1">
+                    </div>
+                </div>
+            </div>
+
+            <!-- OPÇÕES PARA CIRCULAR -->
+            <div id="bloco_linear_circular" style="display: none;">
+                <div class="row-inputs">
+                    <div class="form-group">
+                        <label for="lin_circCentroX">Centro X do Círculo (mm):</label>
+                        <input type="number" id="lin_circCentroX" value="0.0" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="lin_circCentroY">Centro Y do Círculo (mm):</label>
+                        <input type="number" id="lin_circCentroY" value="0.0" step="0.1">
+                    </div>
+                </div>
+                <div class="row-inputs">
+                    <div class="form-group">
+                        <label for="lin_circDiam">Diâmetro Final Desejado (mm):</label>
+                        <input type="number" id="lin_circDiam" value="50.0" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="lin_circSentido">Sentido de Corte:</label>
+                        <select id="lin_circSentido">
+                            <option value="G2">G02 (Horário)</option>
+                            <option value="G3">G03 (Anti-Horário)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <h2>Ferramenta e Profundidade</h2>
+            <div class="row-inputs">
+                <div class="form-group">
+                    <label for="lin_numT">Ferramenta (T):</label>
+                    <input type="number" id="lin_numT" value="2">
+                </div>
+                <div class="form-group">
+                    <label for="lin_diam">Diâmetro da Fresa (mm):</label>
+                    <input type="number" id="lin_diam" value="10.0" step="0.1" oninput="atualizarSimulador()">
+                </div>
+            </div>
+            <div class="row-inputs">
+                <div class="form-group">
+                    <label for="lin_rpm">RPM:</label>
+                    <input type="number" id="lin_rpm" value="2500">
+                </div>
+                <div class="form-group">
+                    <label for="lin_avanco">Avanço (mm/min):</label>
+                    <input type="number" id="lin_avanco" value="800">
+                </div>
+            </div>
+            <div class="row-inputs">
+                <div class="form-group">
+                    <label for="lin_zAprox">Z Aproximação (mm):</label>
+                    <input type="number" id="lin_zAprox" value="5.0" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="lin_zInicial">Z Inicial (mm):</label>
+                    <input type="number" id="lin_zInicial" value="0.0" step="0.1">
+                </div>
+            </div>
+            <div class="row-inputs">
+                <div class="form-group">
+                    <label for="lin_zPasse">Passe em Z (mm):</label>
+                    <input type="number" id="lin_zPasse" value="1.0" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="lin_zFinal">Z Final (mm):</label>
+                    <input type="number" id="lin_zFinal" value="10.0" step="0.1" oninput="atualizarSimulador()">
+                </div>
+            </div>
+
+            <button class="btn-generate" onclick="gerarLinearCircular()">Gerar Apenas Fresagem Lin/Circ</button>
+        </div>
+
     </div>
 
     <!-- PAINEL DE SIMULAÇÃO E CÓDIGO CNC -->
@@ -1283,7 +1424,8 @@
                 <div class="legenda-item"><div class="legenda-box" style="background-color: #cba6f7;"></div><span>Matriz Ilhas</span></div>
                 <div class="legenda-item"><div class="legenda-box" style="background-color: #89dceb;"></div><span>Cavidade</span></div>
                 <div class="legenda-item"><div class="legenda-box" style="background-color: #f9e2af;"></div><span>Alívio</span></div>
-                <div class="legenda-item"><div class="legenda-box" style="background-color: #f38ba8;"></div><span>Furações (G83)</span></div>
+                <div class="legenda-item"><div class="legenda-box" style="background-color: #f38ba8;"></div><span>Furações</span></div>
+                <div class="legenda-item"><div class="legenda-box" style="background-color: #f5c2e7;"></div><span>Lin/Circ</span></div>
             </div>
         </div>
 
@@ -1355,6 +1497,11 @@
     let velocidadeSimulador = 2;
     let trajetoSimulacaoTotal = [];
 
+    // LISTAS DINÂMICAS
+    let listaFaceamentos = [
+        { zeroPeca: 'G54', compX: 250, largY: 250, numT: 1, diam: 70, rpm: 660, avanco: 600, zInicial: 0, zPasse: 0.5, zFinal: -1.0 }
+    ];
+
     let listaFurosCustom = [
         {x: 60, y: 0, t: 5, diam: 8.0, rpm: 1800, avanco: 220, zFinal: 20, qPasse: 3},
         {x: 0, y: 60, t: 5, diam: 8.0, rpm: 1800, avanco: 220, zFinal: 20, qPasse: 3},
@@ -1366,6 +1513,59 @@
         {t: 3, diam: 6.0, rpm: 2200, avanco: 250, q: 3.0},
         {t: 4, diam: 12.0, rpm: 1600, avanco: 180, q: 4.0}
     ];
+
+    // --- LÓGICA DO GERENCIADOR DE MÚLTIPLOS FACEAMENTOS ---
+    function renderizarTabelaFaceamentos() {
+        const tbody = document.getElementById('corpoTabelaFaceamentos');
+        tbody.innerHTML = '';
+
+        if (listaFaceamentos.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="color:#888;">Nenhuma operação de faceamento cadastrada.</td></tr>`;
+            return;
+        }
+
+        listaFaceamentos.forEach((f, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${f.zeroPeca}</td>
+                <td>${f.compX.toFixed(1)} x ${f.largY.toFixed(1)}</td>
+                <td>T${f.numT} (Ø${f.diam})</td>
+                <td>Z${f.zInicial.toFixed(1)} ➔ ${f.zFinal.toFixed(1)}</td>
+                <td><button class="btn-del" onclick="removerFaceamento(${index})">X</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function adicionarOperacaoFaceamento() {
+        const zeroPeca = document.getElementById('f_zeroPeca').value;
+        const compX = parseFloat(document.getElementById('f_compX').value) || 250;
+        const largY = parseFloat(document.getElementById('f_largY').value) || 250;
+        const numT = parseInt(document.getElementById('f_numT').value) || 1;
+        const diam = parseFloat(document.getElementById('f_diam').value) || 70;
+        const rpm = parseInt(document.getElementById('f_rpm').value) || 660;
+        const avanco = parseInt(document.getElementById('f_avanco').value) || 600;
+        const zInicial = parseFloat(document.getElementById('f_zInicial').value) || 0;
+        const zPasse = Math.abs(parseFloat(document.getElementById('f_zPasse').value)) || 0.5;
+        const zFinal = parseFloat(document.getElementById('f_zFinal').value) || -1.0;
+
+        listaFaceamentos.push({ zeroPeca, compX, largY, numT, diam, rpm, avanco, zInicial, zPasse, zFinal });
+        renderizarTabelaFaceamentos();
+        atualizarSimulador();
+    }
+
+    function removerFaceamento(index) {
+        listaFaceamentos.splice(index, 1);
+        renderizarTabelaFaceamentos();
+        atualizarSimulador();
+    }
+
+    function limparTodosFaceamentos() {
+        listaFaceamentos = [];
+        renderizarTabelaFaceamentos();
+        atualizarSimulador();
+    }
 
     // --- LÓGICA DO SIMULADOR INTEGRADO 2D / 3D E CAMINHO DA FERRAMENTA ---
     function definirModoSimulador(modo) {
@@ -1383,6 +1583,18 @@
         } else {
             bloco.style.display = 'block';
         }
+    }
+
+    function alternarTipoLinear() {
+        const tipo = document.getElementById('lin_tipo').value;
+        if (tipo === 'CIRCULAR') {
+            document.getElementById('bloco_linear_retas').style.display = 'none';
+            document.getElementById('bloco_linear_circular').style.display = 'block';
+        } else {
+            document.getElementById('bloco_linear_retas').style.display = 'block';
+            document.getElementById('bloco_linear_circular').style.display = 'none';
+        }
+        atualizarSimulador();
     }
 
     function alternarAnimacaoSimulador() {
@@ -1444,24 +1656,25 @@
         const brutoX = parseFloat(document.getElementById('multi_brutoX').value) || 250;
         const brutoY = parseFloat(document.getElementById('multi_brutoY').value) || 250;
 
-        // 1. FACEAMENTO
-        if (document.getElementById('chk_faceamento').checked) {
-            const fDiam = parseFloat(document.getElementById('f_diam').value) || 70;
-            const zFinal = parseFloat(document.getElementById('f_zFinal').value) || -1;
-            const passoY = fDiam * 0.6;
-            let yAtual = -brutoY / 2;
-            let dir = true;
+        // 1. MÚLTIPLOS FACEAMENTOS
+        if (document.getElementById('chk_faceamento').checked && listaFaceamentos.length > 0) {
+            listaFaceamentos.forEach(f => {
+                const passoY = f.diam * 0.6;
+                let yAtual = -(f.largY / 2) - (f.diam * 0.6);
+                const limitY = (f.largY / 2) + (f.diam * 0.6);
+                let dir = true;
 
-            while (yAtual <= brutoY / 2) {
-                let xStart = dir ? -brutoX / 2 - fDiam / 2 : brutoX / 2 + fDiam / 2;
-                let xEnd = dir ? brutoX / 2 + fDiam / 2 : -brutoX / 2 - fDiam / 2;
+                while (yAtual <= limitY) {
+                    let xStart = dir ? -(f.compX / 2) - (f.diam * 0.6) : (f.compX / 2) + (f.diam * 0.6);
+                    let xEnd = dir ? (f.compX / 2) + (f.diam * 0.6) : -(f.compX / 2) - (f.diam * 0.6);
 
-                trajetoSimulacaoTotal.push({ x: xStart, y: yAtual, z: zFinal, diam: fDiam, cor: '#00adb5' });
-                trajetoSimulacaoTotal.push({ x: xEnd, y: yAtual, z: zFinal, diam: fDiam, cor: '#00adb5' });
+                    trajetoSimulacaoTotal.push({ x: xStart, y: yAtual, z: f.zFinal, diam: f.diam, cor: '#00adb5' });
+                    trajetoSimulacaoTotal.push({ x: xEnd, y: yAtual, z: f.zFinal, diam: f.diam, cor: '#00adb5' });
 
-                yAtual += passoY;
-                dir = !dir;
-            }
+                    yAtual += passoY;
+                    dir = !dir;
+                }
+            });
         }
 
         // 2. CONTORNO (Desbaste + Acabamento Opcional)
@@ -1565,6 +1778,44 @@
                 trajetoSimulacaoTotal.push({ x: minX, y: maxY, z: cavZFinal, diam: cavDiam, cor: '#89dceb' });
                 trajetoSimulacaoTotal.push({ x: minX, y: minY, z: cavZFinal, diam: cavDiam, cor: '#89dceb' });
             });
+        }
+
+        // 6. LINEAR E CIRCULAR
+        if (document.getElementById('chk_linear').checked) {
+            const linDiam = parseFloat(document.getElementById('lin_diam').value) || 10.0;
+            const linZ = -Math.abs(parseFloat(document.getElementById('lin_zFinal').value) || 10.0);
+            const tipo = document.getElementById('lin_tipo').value;
+
+            if (tipo === 'CIRCULAR') {
+                const cX = parseFloat(document.getElementById('lin_circCentroX').value) || 0;
+                const cY = parseFloat(document.getElementById('lin_circCentroY').value) || 0;
+                const diamDesejado = parseFloat(document.getElementById('lin_circDiam').value) || 50;
+                
+                const rReal = (diamDesejado / 2) - (linDiam / 2); 
+                
+                for (let a = 0; a <= 360; a += 10) {
+                    let rad = a * Math.PI / 180;
+                    trajetoSimulacaoTotal.push({
+                        x: cX + rReal * Math.cos(rad),
+                        y: cY + rReal * Math.sin(rad),
+                        z: linZ, diam: linDiam, cor: '#f5c2e7'
+                    });
+                }
+            } else {
+                let sx = parseFloat(document.getElementById('lin_startX').value) || 0;
+                let sy = parseFloat(document.getElementById('lin_startY').value) || 0;
+                let ex = parseFloat(document.getElementById('lin_endX').value) || 0;
+                let ey = parseFloat(document.getElementById('lin_endY').value) || 0;
+
+                if (tipo === 'RETAX') ey = sy;
+                if (tipo === 'RETAY') ex = sx;
+
+                trajetoSimulacaoTotal.push({ x: sx, y: sy, z: 5, diam: linDiam, cor: '#f5c2e7' });
+                trajetoSimulacaoTotal.push({ x: sx, y: sy, z: linZ, diam: linDiam, cor: '#f5c2e7' });
+                trajetoSimulacaoTotal.push({ x: ex, y: ey, z: linZ, diam: linDiam, cor: '#f5c2e7' });
+                trajetoSimulacaoTotal.push({ x: sx, y: sy, z: linZ, diam: linDiam, cor: '#f5c2e7' }); 
+                trajetoSimulacaoTotal.push({ x: sx, y: sy, z: 5, diam: linDiam, cor: '#f5c2e7' });
+            }
         }
     }
 
@@ -2274,82 +2525,84 @@
 
     // --- FUNÇÕES GERADORAS DE CÓDIGO NO PADRÃO CNC REAL ---
 
-    function obterBlocoFaceamento(zeroPeca, oleo, useM01) {
-        const compX = parseFloat(document.getElementById('f_compX').value);
-        const largY = parseFloat(document.getElementById('f_largY').value);
-        const numT = parseInt(document.getElementById('f_numT').value);
-        const diam = parseFloat(document.getElementById('f_diam').value);
-        const rpm = parseInt(document.getElementById('f_rpm').value);
-        const avanco = parseInt(document.getElementById('f_avanco').value);
-
-        const zAprox = parseFloat(document.getElementById('f_zAprox').value);
-        const zInicial = parseFloat(document.getElementById('f_zInicial').value);
-        const zPasse = Math.abs(parseFloat(document.getElementById('f_zPasse').value));
-        const zFinal = parseFloat(document.getElementById('f_zFinal').value);
-
-        if (!validarZAproximacao(zAprox, zInicial, "FACEAMENTO")) return null;
-
-        const passoY = diam * 0.6;
-
-        let gcode = `(INICIO-DA-TAREFA-FACEAMENTO)\n`;
-        gcode += `${zeroPeca}G90G21G17\n`;
-        gcode += `T${numT}M6\n`;
-        if (useM01) gcode += `M01\n`;
-        gcode += `G43H${numT}G0Z100\n`;
-        gcode += `S${rpm}M3\n`;
-        gcode += `G52X-${(compX/2).toFixed(2)}Y-${(largY/2).toFixed(2)}\n`;
-        gcode += `X-${diam.toFixed(1)}Y0\n`;
-        gcode += `Z${(zInicial + 1).toFixed(2)}\n`;
-
-        let zAtual = zInicial;
-        let contadorPasse = 1;
-
-        while (zAtual >= zFinal) {
-            gcode += `N${contadorPasse}\n`;
-            gcode += `G1F${avanco}Y0\n`;
-            gcode += `Z${zAtual.toFixed(2)}\n`;
-            gcode += `${oleo}\n`;
-
-            let posicaoY = 0.0;
-            let direcaoX = true;
-
-            while (posicaoY <= largY) {
-                if (direcaoX) {
-                    gcode += `X${(compX + diam).toFixed(2)}\n`;
-                } else {
-                    gcode += `X-${diam.toFixed(2)}\n`;
-                }
-
-                posicaoY += passoY;
-                if (posicaoY <= largY) {
-                    gcode += `Y${posicaoY.toFixed(2)}\n`;
-                } else {
-                    if ((posicaoY - passoY) < largY) {
-                        gcode += `Y${largY.toFixed(2)}\n`;
-                        direcaoX = !direcaoX;
-                        if (direcaoX) {
-                            gcode += `X${(compX + diam).toFixed(2)}\n`;
-                        } else {
-                            gcode += `X-${diam.toFixed(2)}\n`;
-                        }
-                    }
-                }
-                direcaoX = !direcaoX;
-            }
-
-            gcode += `G91Z5\n`;
-            gcode += `G90\n`;
-            gcode += `G0X-${diam.toFixed(2)}Y0\n`;
-
-            if (zAtual === zFinal) break;
-
-            zAtual = zAtual - zPasse;
-            if (zAtual < zFinal) zAtual = zFinal;
-            contadorPasse++;
+    function obterBlocoFaceamento(oleo, useM01) {
+        if (listaFaceamentos.length === 0) {
+            alert("A lista de faceamentos está vazia! Adicione pelo menos uma operação na Aba 1.");
+            return null;
         }
 
-        gcode += `G0Z200M9\n`;
-        gcode += `M05\n`;
+        let gcode = `(INICIO-DA-TAREFA-FACEAMENTO)\n`;
+
+        listaFaceamentos.forEach((f, index) => {
+            const passoY = f.diam * 0.6;
+
+            gcode += `(FACEAMENTO-${index + 1})\n`;
+            gcode += `${f.zeroPeca}G90G21G17\n`;
+            gcode += `T${f.numT}M6\n`;
+            if (useM01) gcode += `M01\n`;
+            gcode += `G43H${f.numT}G0Z100\n`;
+            gcode += `S${f.rpm}M3\n`;
+
+            // NOVO CÁLCULO CENTRADO X0 Y0 ABSOLUTO (Sem G52)
+            const startX = -(f.compX / 2) - (f.diam * 0.6);
+            const endX = (f.compX / 2) + (f.diam * 0.6);
+            let startY = -(f.largY / 2) - (f.diam * 0.6);
+            let limitY = (f.largY / 2) + (f.diam * 0.6);
+
+            gcode += `G0X${startX.toFixed(2)}Y${startY.toFixed(2)}\n`;
+            gcode += `Z${(f.zInicial + 1).toFixed(2)}\n`;
+
+            let zAtual = f.zInicial;
+            let contadorPasse = 1;
+
+            while (zAtual >= f.zFinal) {
+                gcode += `N${contadorPasse}\n`;
+                gcode += `G1F${f.avanco}Y${startY.toFixed(2)}\n`; 
+                gcode += `Z${zAtual.toFixed(2)}\n`;
+                gcode += `${oleo}\n`;
+
+                let posicaoY = startY;
+                let direcaoX = true;
+
+                while (posicaoY <= limitY) {
+                    if (direcaoX) {
+                        gcode += `X${endX.toFixed(2)}\n`;
+                    } else {
+                        gcode += `X${startX.toFixed(2)}\n`;
+                    }
+
+                    posicaoY += passoY;
+                    if (posicaoY <= limitY) {
+                        gcode += `Y${posicaoY.toFixed(2)}\n`;
+                    } else {
+                        if ((posicaoY - passoY) < limitY) {
+                            gcode += `Y${limitY.toFixed(2)}\n`;
+                            direcaoX = !direcaoX;
+                            if (direcaoX) {
+                                gcode += `X${endX.toFixed(2)}\n`;
+                            } else {
+                                gcode += `X${startX.toFixed(2)}\n`;
+                            }
+                        }
+                    }
+                    direcaoX = !direcaoX;
+                }
+
+                gcode += `G91Z5\n`;
+                gcode += `G90\n`;
+                gcode += `G0X${startX.toFixed(2)}Y${startY.toFixed(2)}\n`;
+
+                if (zAtual === f.zFinal) break;
+
+                zAtual = zAtual - f.zPasse;
+                if (zAtual < f.zFinal) zAtual = f.zFinal;
+                contadorPasse++;
+            }
+
+            gcode += `G0Z200M9\n`;
+            gcode += `M05\n\n`;
+        });
+
         return gcode;
     }
 
@@ -2380,11 +2633,20 @@
         if (useM01) gcode += `M01\n`;
         gcode += `G43H${numT}G0Z150\n`;
         gcode += `S${rpm}M3\n`;
-        gcode += `G52X-${(compX/2).toFixed(2)}Y-${(largY/2).toFixed(2)}\n`;
-        gcode += `X-${(diam + 10).toFixed(2)}Y-${(diam/2).toFixed(2)}\n`;
+
+        // NOVO CÁLCULO CENTRADO X0 Y0 ABSOLUTO (Sem G52)
+        let quadRight = (compX / 2) + sobremetal + (diam / 2);
+        let quadTop = (largY / 2) + sobremetal + (diam / 2);
+        let quadLeft = -(compX / 2) - sobremetal - (diam / 2);
+        let quadBottom = -(largY / 2) - sobremetal - (diam / 2);
+
+        let pInicialX = quadLeft - 10; // Afasta pra mergulho
+        let pInicialY = quadBottom;
+
+        gcode += `G0X${pInicialX.toFixed(2)}Y${pInicialY.toFixed(2)}\n`;
         gcode += `Z${(zInicial + 1).toFixed(2)}F${avanco}\n`;
         gcode += `${oleo}\n`;
-        gcode += `G1X-${(diam + 10).toFixed(2)}\n`;
+        gcode += `G1X${quadLeft.toFixed(2)}\n`;
 
         let zAtual = zInicial;
 
@@ -2395,18 +2657,18 @@
             let dz = (zProximo - zAtual) / 4;
 
             gcode += `G1Z-${zAtual.toFixed(2)}\n`;
-            gcode += `X${(compX + sobremetal + diam/2).toFixed(2)}Z-${(zAtual + dz * 1).toFixed(3)}\n`;
-            gcode += `Y${(largY + sobremetal + diam/2).toFixed(2)}Z-${(zAtual + dz * 2).toFixed(3)}\n`;
-            gcode += `X-${(sobremetal + diam/2).toFixed(2)}Z-${(zAtual + dz * 3).toFixed(3)}\n`;
-            gcode += `Y-${(sobremetal + diam/2).toFixed(2)}Z-${zProximo.toFixed(3)}\n`;
+            gcode += `X${quadRight.toFixed(2)}Z-${(zAtual + dz * 1).toFixed(3)}\n`;
+            gcode += `Y${quadTop.toFixed(2)}Z-${(zAtual + dz * 2).toFixed(3)}\n`;
+            gcode += `X${quadLeft.toFixed(2)}Z-${(zAtual + dz * 3).toFixed(3)}\n`;
+            gcode += `Y${quadBottom.toFixed(2)}Z-${zProximo.toFixed(3)}\n`;
 
             zAtual = zProximo;
         }
 
-        gcode += `X${(compX + sobremetal + diam/2).toFixed(2)}\n`;
-        gcode += `Y${(largY + sobremetal + diam/2).toFixed(2)}\n`;
-        gcode += `X-${(sobremetal + diam/2).toFixed(2)}\n`;
-        gcode += `Y-${(sobremetal + diam/2).toFixed(2)}\n`;
+        gcode += `X${quadRight.toFixed(2)}\n`;
+        gcode += `Y${quadTop.toFixed(2)}\n`;
+        gcode += `X${quadLeft.toFixed(2)}\n`;
+        gcode += `Y${quadBottom.toFixed(2)}\n`;
 
         gcode += `G0Z150\n`;
         gcode += `M05M9\n\n`;
@@ -2417,11 +2679,19 @@
             if (useM01) gcode += `M01\n`;
             gcode += `G43H${numTAcab}G0Z150\n`;
             gcode += `S${rpmAcab}M3\n`;
-            gcode += `G52X-${(compX/2).toFixed(2)}Y-${(largY/2).toFixed(2)}\n`;
-            gcode += `X-${(diamAcab + 10).toFixed(2)}Y-${(diamAcab/2).toFixed(2)}\n`;
+
+            let aRight = (compX / 2) + (diamAcab / 2);
+            let aTop = (largY / 2) + (diamAcab / 2);
+            let aLeft = -(compX / 2) - (diamAcab / 2);
+            let aBottom = -(largY / 2) - (diamAcab / 2);
+
+            let aInicialX = aLeft - 10;
+            let aInicialY = aBottom;
+
+            gcode += `G0X${aInicialX.toFixed(2)}Y${aInicialY.toFixed(2)}\n`;
             gcode += `Z${(zInicial + 1).toFixed(2)}F${avancoAcab}\n`;
             gcode += `${oleo}\n`;
-            gcode += `G1X-${(diamAcab + 10).toFixed(2)}\n`;
+            gcode += `G1X${aLeft.toFixed(2)}\n`;
 
             let zAtualAcab = zInicial;
             let zPasseAcab = zPasse / 2;
@@ -2433,18 +2703,18 @@
                 let dz = (zProximo - zAtualAcab) / 4;
 
                 gcode += `G1Z-${zAtualAcab.toFixed(2)}\n`;
-                gcode += `X${(compX + diamAcab/2).toFixed(2)}Z-${(zAtualAcab + dz * 1).toFixed(3)}\n`;
-                gcode += `Y${(largY + diamAcab/2).toFixed(2)}Z-${(zAtualAcab + dz * 2).toFixed(3)}\n`;
-                gcode += `X-${(diamAcab/2).toFixed(2)}Z-${(zAtualAcab + dz * 3).toFixed(3)}\n`;
-                gcode += `Y-${(diamAcab/2).toFixed(2)}Z-${zProximo.toFixed(3)}\n`;
+                gcode += `X${aRight.toFixed(2)}Z-${(zAtualAcab + dz * 1).toFixed(3)}\n`;
+                gcode += `Y${aTop.toFixed(2)}Z-${(zAtualAcab + dz * 2).toFixed(3)}\n`;
+                gcode += `X${aLeft.toFixed(2)}Z-${(zAtualAcab + dz * 3).toFixed(3)}\n`;
+                gcode += `Y${aBottom.toFixed(2)}Z-${zProximo.toFixed(3)}\n`;
 
                 zAtualAcab = zProximo;
             }
 
-            gcode += `X${(compX + diamAcab/2).toFixed(2)}\n`;
-            gcode += `Y${(largY + diamAcab/2).toFixed(2)}\n`;
-            gcode += `X-${(diamAcab/2).toFixed(2)}\n`;
-            gcode += `Y-${(diamAcab/2).toFixed(2)}\n`;
+            gcode += `X${aRight.toFixed(2)}\n`;
+            gcode += `Y${aTop.toFixed(2)}\n`;
+            gcode += `X${aLeft.toFixed(2)}\n`;
+            gcode += `Y${aBottom.toFixed(2)}\n`;
 
             gcode += `G0Z150\n`;
             gcode += `M05M9\n\n`;
@@ -2825,6 +3095,82 @@
         return gcode;
     }
 
+    // --- LÓGICA GERADORA DA NOVA ABA LINEAR/CIRCULAR ---
+    function obterBlocoLinear(zeroPeca, oleo, useM01) {
+        const numT = parseInt(document.getElementById('lin_numT').value);
+        const diam = parseFloat(document.getElementById('lin_diam').value);
+        const rpm = parseInt(document.getElementById('lin_rpm').value);
+        const avanco = parseInt(document.getElementById('lin_avanco').value);
+        const zAprox = parseFloat(document.getElementById('lin_zAprox').value);
+        const zInicial = parseFloat(document.getElementById('lin_zInicial').value);
+        const zPasse = Math.abs(parseFloat(document.getElementById('lin_zPasse').value));
+        const zFinal = Math.abs(parseFloat(document.getElementById('lin_zFinal').value));
+        const tipo = document.getElementById('lin_tipo').value;
+
+        if (!validarZAproximacao(zAprox, zInicial, "FRESAGEM LINEAR/CIRCULAR")) return null;
+
+        let gcode = `(INICIO-DA-TAREFA-FRESAGEM-LINEAR-CIRCULAR)\n`;
+        gcode += `T${numT}M6\n`;
+        if (useM01) gcode += `M01\n`;
+        gcode += `G43H${numT}G0Z150\n`;
+        gcode += `S${rpm}M3\n`;
+        gcode += `${oleo}\n`;
+
+        let zAtual = zInicial;
+
+        if (tipo === 'CIRCULAR') {
+            const cX = parseFloat(document.getElementById('lin_circCentroX').value);
+            const cY = parseFloat(document.getElementById('lin_circCentroY').value);
+            const circDiamDesejado = parseFloat(document.getElementById('lin_circDiam').value);
+            const sentido = document.getElementById('lin_circSentido').value;
+            
+            // Compensa o raio da fresa assumindo o corte acompanhando a parede do diâmetro escolhido.
+            const raioReal = (circDiamDesejado / 2) - (diam / 2); 
+            
+            let startX = cX + raioReal;
+            let startY = cY;
+
+            while (zAtual < zFinal) {
+                let zProximo = zAtual + zPasse;
+                if (zProximo > zFinal) zProximo = zFinal;
+
+                gcode += `G0X${startX.toFixed(3)}Y${startY.toFixed(3)}\n`;
+                gcode += `G0Z${zAprox.toFixed(1)}\n`;
+                gcode += `G1Z-${zProximo.toFixed(3)}F${(avanco / 2).toFixed(0)}\n`;
+                gcode += `${sentido}X${startX.toFixed(3)}Y${startY.toFixed(3)}I-${raioReal.toFixed(3)}J0F${avanco}\n`;
+                gcode += `G0Z${zAprox.toFixed(1)}\n`;
+                
+                zAtual = zProximo;
+            }
+        } else {
+            let sx = parseFloat(document.getElementById('lin_startX').value);
+            let sy = parseFloat(document.getElementById('lin_startY').value);
+            let ex = parseFloat(document.getElementById('lin_endX').value);
+            let ey = parseFloat(document.getElementById('lin_endY').value);
+
+            if (tipo === 'RETAX') ey = sy;
+            if (tipo === 'RETAY') ex = sx;
+
+            while (zAtual < zFinal) {
+                let zProximo = zAtual + zPasse;
+                if (zProximo > zFinal) zProximo = zFinal;
+
+                gcode += `G0X${sx.toFixed(3)}Y${sy.toFixed(3)}\n`;
+                gcode += `G0Z${zAprox.toFixed(1)}\n`;
+                gcode += `G1Z-${zProximo.toFixed(3)}F${(avanco / 2).toFixed(0)}\n`;
+                gcode += `G1X${ex.toFixed(3)}Y${ey.toFixed(3)}F${avanco}\n`;
+                gcode += `G0Z${zAprox.toFixed(1)}\n`;
+                
+                zAtual = zProximo;
+            }
+        }
+        
+        gcode += `G0Z150\n`;
+        gcode += `M05M9\n\n`;
+        
+        return gcode;
+    }
+
     // --- PROGRAMA COMBINADO INTEGRADO ---
     function gerarProgramaCombinado() {
         const incFace = document.getElementById('chk_faceamento').checked;
@@ -2832,8 +3178,9 @@
         const incMatr = document.getElementById('chk_matriz').checked;
         const incList = document.getElementById('chk_lista_furos').checked;
         const incCav  = document.getElementById('chk_cavidade').checked;
+        const incLin  = document.getElementById('chk_linear').checked;
 
-        if (!incFace && !incCont && !incMatr && !incList && !incCav) {
+        if (!incFace && !incCont && !incMatr && !incList && !incCav && !incLin) {
             alert("Selecione pelo menos uma operação para gerar o programa!");
             return;
         }
@@ -2842,11 +3189,11 @@
         const oleo = document.getElementById('multi_oleo').value;
         const useM01 = document.getElementById('multi_useM01').checked;
 
-        let gcode = `%\nO9(PROGRAMA.REAL)\n`;
+        let gcode = `%\(Gerador Integrado G-Code CNC)\n`;
         gcode += `#24=${zeroPeca.replace('G', '')}(PONTO.ZERO)\n\n`;
 
         if (incFace) {
-            let bloco = obterBlocoFaceamento(zeroPeca, oleo, useM01);
+            let bloco = obterBlocoFaceamento(oleo, useM01);
             if (bloco === null) return;
             gcode += bloco;
         }
@@ -2875,6 +3222,12 @@
             gcode += bloco;
         }
 
+        if (incLin) {
+            let bloco = obterBlocoLinear(zeroPeca, oleo, useM01);
+            if (bloco === null) return;
+            gcode += bloco;
+        }
+
         gcode += `G53Y0\n`;
         gcode += `M30\n%`;
 
@@ -2889,6 +3242,7 @@
         document.getElementById('chk_matriz').checked = false;
         document.getElementById('chk_lista_furos').checked = false;
         document.getElementById('chk_cavidade').checked = false;
+        document.getElementById('chk_linear').checked = false;
         gerarProgramaCombinado();
     }
 
@@ -2898,6 +3252,7 @@
         document.getElementById('chk_matriz').checked = false;
         document.getElementById('chk_lista_furos').checked = false;
         document.getElementById('chk_cavidade').checked = false;
+        document.getElementById('chk_linear').checked = false;
         gerarProgramaCombinado();
     }
 
@@ -2907,6 +3262,7 @@
         document.getElementById('chk_matriz').checked = true;
         document.getElementById('chk_lista_furos').checked = false;
         document.getElementById('chk_cavidade').checked = false;
+        document.getElementById('chk_linear').checked = false;
         gerarProgramaCombinado();
     }
 
@@ -2916,6 +3272,7 @@
         document.getElementById('chk_matriz').checked = false;
         document.getElementById('chk_lista_furos').checked = true;
         document.getElementById('chk_cavidade').checked = false;
+        document.getElementById('chk_linear').checked = false;
         gerarProgramaCombinado();
     }
 
@@ -2925,6 +3282,17 @@
         document.getElementById('chk_matriz').checked = false;
         document.getElementById('chk_lista_furos').checked = false;
         document.getElementById('chk_cavidade').checked = true;
+        document.getElementById('chk_linear').checked = false;
+        gerarProgramaCombinado();
+    }
+    
+    function gerarLinearCircular() {
+        document.getElementById('chk_faceamento').checked = false;
+        document.getElementById('chk_contorno').checked = false;
+        document.getElementById('chk_matriz').checked = false;
+        document.getElementById('chk_lista_furos').checked = false;
+        document.getElementById('chk_cavidade').checked = false;
+        document.getElementById('chk_linear').checked = true;
         gerarProgramaCombinado();
     }
 
@@ -2995,27 +3363,22 @@
         const incMatr = document.getElementById('chk_matriz').checked;
         const incList = document.getElementById('chk_lista_furos').checked;
         const incCav  = document.getElementById('chk_cavidade').checked;
+        const incLin  = document.getElementById('chk_linear').checked;
 
         let ferramentasUsadas = [];
         let operacoesResumo = [];
         let tempoTotalMinutos = 0;
 
-        if (incFace) {
-            const t = parseInt(document.getElementById('f_numT').value);
-            const diam = parseFloat(document.getElementById('f_diam').value);
-            const zFinal = parseFloat(document.getElementById('f_zFinal').value);
-            const avanco = parseInt(document.getElementById('f_avanco').value);
-            const compX = parseFloat(document.getElementById('f_compX').value);
-            const largY = parseFloat(document.getElementById('f_largY').value);
-            const zPasse = parseFloat(document.getElementById('f_zPasse').value);
+        if (incFace && listaFaceamentos.length > 0) {
+            listaFaceamentos.forEach((f, idx) => {
+                ferramentasUsadas.push({ t: f.numT, diam: f.diam, tipo: 'Cabeçote de Facear' });
+                let distPasse = (f.compX + f.diam * 2) * (f.largY / (f.diam * 0.6));
+                let qtdPassesZ = Math.ceil(Math.abs(f.zFinal - f.zInicial) / f.zPasse);
+                let tempoMin = (distPasse * qtdPassesZ) / f.avanco;
+                tempoTotalMinutos += tempoMin;
 
-            ferramentasUsadas.push({ t, diam, tipo: 'Cabeçote de Facear' });
-            let distPasse = (compX + diam * 2) * (largY / (diam * 0.6));
-            let qtdPassesZ = Math.ceil(Math.abs(zFinal) / zPasse);
-            let tempoMin = (distPasse * qtdPassesZ) / avanco;
-            tempoTotalMinutos += tempoMin;
-
-            operacoesResumo.push(`- Faceamento: Profundidade Z = ${zFinal.toFixed(1)} mm | Ferramenta T${t} (Ø${diam}mm) | Tempo ~ ${tempoMin.toFixed(2)} min`);
+                operacoesResumo.push(`- Faceamento ${idx + 1}: ${f.compX}x${f.largY}mm | Z = ${f.zInicial} ➔ ${f.zFinal} mm | T${f.numT} (Ø${f.diam}mm) | Tempo ~ ${tempoMin.toFixed(2)} min`);
+            });
         }
 
         if (incCont) {
@@ -3103,6 +3466,19 @@
             tempoTotalMinutos += tempoMin;
             operacoesResumo.push(`- Cavidades Retas [${centros.length} cavidade(s)] (${execAlivio ? listaBrocasAlivio.length + ' Broca(s) Alívio' : 'Sem Alívio'}${execContorno ? ' + Contorno Raio' : ''}): Profundidade Z = -${zFinal.toFixed(1)} mm | Tempo ~ ${tempoMin.toFixed(2)} min`);
         }
+        
+        if (incLin) {
+            const t = parseInt(document.getElementById('lin_numT').value);
+            const diam = parseFloat(document.getElementById('lin_diam').value);
+            const zFinal = Math.abs(parseFloat(document.getElementById('lin_zFinal').value));
+            const tipo = document.getElementById('lin_tipo').value;
+            ferramentasUsadas.push({ t, diam, tipo: 'Fresa Linear/Circular' });
+            
+            let tempoMin = (zFinal * 0.5) + 0.5;
+            tempoTotalMinutos += tempoMin;
+            
+            operacoesResumo.push(`- Fresagem Linear/Circular (${tipo}): Profundidade Z = -${zFinal.toFixed(1)} mm | Tempo ~ ${tempoMin.toFixed(2)} min`);
+        }
 
         let ferramentasUnicas = [];
         let mapa = {};
@@ -3141,12 +3517,14 @@
     }
 
     window.onload = function() {
+        renderizarTabelaFaceamentos();
         alternarAcabamentoMatriz();
         alternarAcabamentoContorno();
         alternarCamposPadrao();
         alternarModoPosicaoCavidade();
         alternarOpcaoAlivio();
         alternarOpcaoContornoRaio();
+        alternarTipoLinear();
         renderizarTabelaFuros();
         renderizarTabelaBrocasAlivio();
         validarMatriz();
