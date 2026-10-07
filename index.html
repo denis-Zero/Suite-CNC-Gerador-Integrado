@@ -591,7 +591,7 @@
             </div>
             <div class="checkbox-group">
                 <input type="checkbox" id="chk_cavidade" checked>
-                <label for="chk_cavidade" style="margin:0; cursor:pointer; color:#fff; font-weight:bold;">5. Incluir Usinagem de Cavidade(s) Reta(s)</label>
+                <label for="chk_cavidade" style="margin:0; cursor:pointer; color:#fff; font-weight:bold;">5. Incluir Usinagem de Cavidade(s) Reta(s)/Circulares</label>
             </div>
             <div class="checkbox-group" style="border-color: var(--accent);">
                 <input type="checkbox" id="chk_linear" checked>
@@ -1057,7 +1057,7 @@
 
         <!-- ABA 5: CAVIDADE COM FUROS DE ALÍVIO E REDUÇÃO DE RAIO -->
         <div id="aba-cavidade" class="tab-content">
-            <h2>Usinagem de Cavidade Reta com Alívio</h2>
+            <h2>Usinagem de Cavidade com Alívio</h2>
             
             <div class="form-group">
                 <label for="cav_zeroPeca">Zero Peça:</label>
@@ -1068,24 +1068,44 @@
                 </select>
             </div>
 
-            <h2>Modo de Posicionamento da Cavidade</h2>
-            <div class="form-group">
-                <label for="cav_modoPosicao">Modo:</label>
-                <select id="cav_modoPosicao" onchange="alternarModoPosicaoCavidade()">
-                    <option value="UNICA" selected>Cavidade Única (Centro Especificado)</option>
-                    <option value="MALHA">Malha de Cavidades (Matriz X / Y)</option>
-                </select>
-            </div>
-
-            <h2>Geometria da Cavidade (Retangular)</h2>
+            <h2>Formato e Modo de Posicionamento</h2>
             <div class="row-inputs">
                 <div class="form-group">
-                    <label for="cav_dimX">Comprimento X (mm):</label>
-                    <input type="number" id="cav_dimX" value="100.0" step="0.1" oninput="validarCavidade()">
+                    <label for="cav_formato">Formato da Cavidade:</label>
+                    <select id="cav_formato" onchange="alternarFormatoCavidade()" style="font-weight: bold; color: var(--accent);">
+                        <option value="RETANGULAR" selected>Retangular</option>
+                        <option value="CIRCULAR">Circular</option>
+                    </select>
                 </div>
                 <div class="form-group">
-                    <label for="cav_dimY">Largura Y (mm):</label>
-                    <input type="number" id="cav_dimY" value="60.0" step="0.1" oninput="validarCavidade()">
+                    <label for="cav_modoPosicao">Modo de Posição:</label>
+                    <select id="cav_modoPosicao" onchange="alternarModoPosicaoCavidade()">
+                        <option value="UNICA" selected>Única (Centro Especificado)</option>
+                        <option value="MALHA">Malha (Matriz X / Y)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- GEOMETRIA DA CAVIDADE -->
+            <h2>Geometria da Cavidade</h2>
+            
+            <div id="bloco_cavidade_retangular">
+                <div class="row-inputs">
+                    <div class="form-group">
+                        <label for="cav_dimX">Comprimento X (mm):</label>
+                        <input type="number" id="cav_dimX" value="100.0" step="0.1" oninput="validarCavidade()">
+                    </div>
+                    <div class="form-group">
+                        <label for="cav_dimY">Largura Y (mm):</label>
+                        <input type="number" id="cav_dimY" value="60.0" step="0.1" oninput="validarCavidade()">
+                    </div>
+                </div>
+            </div>
+            
+            <div id="bloco_cavidade_circular" style="display:none;">
+                <div class="form-group">
+                    <label for="cav_diamCirc">Diâmetro da Cavidade (mm):</label>
+                    <input type="number" id="cav_diamCirc" value="60.0" step="0.1" oninput="validarCavidade()">
                 </div>
             </div>
 
@@ -1220,7 +1240,7 @@
             <h2>Contorno / Redução de Raio nos Cantos (Acabamento)</h2>
             <div class="checkbox-group">
                 <input type="checkbox" id="cav_execContornoRaio" checked onchange="alternarOpcaoContornoRaio()">
-                <label for="cav_execContornoRaio" style="margin:0; cursor:pointer; color:#fff; font-weight:bold;">Executar Contorno / Redução de Raio</label>
+                <label for="cav_execContornoRaio" style="margin:0; cursor:pointer; color:#fff; font-weight:bold;">Executar Contorno / Acabamento</label>
             </div>
 
             <div id="blocoParametrosContornoRaio">
@@ -1230,13 +1250,13 @@
                         <input type="number" id="cav_acabT" value="6">
                     </div>
                     <div class="form-group">
-                        <label for="cav_acabDiam">Diâmetro Menor (mm):</label>
+                        <label for="cav_acabDiam">Diâmetro Fresa Acab. (mm):</label>
                         <input type="number" id="cav_acabDiam" value="6.0" step="0.1" oninput="validarCavidade()">
                     </div>
                 </div>
                 <div class="row-inputs">
                     <div class="form-group">
-                        <label for="cav_acabRpm">RPM Fresa Menor:</label>
+                        <label for="cav_acabRpm">RPM Fresa Acab.:</label>
                         <input type="number" id="cav_acabRpm" value="3800">
                     </div>
                     <div class="form-group">
@@ -1245,7 +1265,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="cav_sobremetalParedes">Sobremetal Deixado no Desbaste X/Y (mm):</label>
+                    <label for="cav_sobremetalParedes">Sobremetal Deixado no Desbaste (mm):</label>
                     <input type="number" id="cav_sobremetalParedes" value="0.3" step="0.05">
                 </div>
             </div>
@@ -1273,11 +1293,33 @@
             </div>
 
             <div id="statusCavidade" class="status-box ok">Verificando cavidade...</div>
+            
+            <button class="btn-secondary" onclick="adicionarCavidade()">+ Adicionar Cavidade à Tabela</button>
 
-            <button id="btnGerarCavidade" class="btn-generate" onclick="gerarCavidadeGCode()">Gerar Código da Cavidade</button>
+            <!-- NOVO: TABELA DE CAVIDADES CADASTRADAS -->
+            <h2>Cavidades c/ Alívio Cadastradas</h2>
+            <table class="table-furos">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Formato / Dimensões</th>
+                        <th>Modo Posição</th>
+                        <th>T Desb. (Ø)</th>
+                        <th>Z Final</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoTabelaCavidades">
+                    <!-- Preenchido via JavaScript -->
+                </tbody>
+            </table>
+
+            <button class="btn-secondary" style="background-color: var(--danger); margin-top: 6px;" onclick="limparCavidades()">Limpar Lista de Cavidades</button>
+
+            <button id="btnGerarCavidade" class="btn-generate" onclick="gerarCavidadeGCode()">Gerar Apenas Cavidade(s)</button>
         </div>
 
-        <!-- ABA 6: FRESAGEM LINEAR E CIRCULAR (NOVA ABA) -->
+        <!-- ABA 6: FRESAGEM LINEAR E CIRCULAR -->
         <div id="aba-linear" class="tab-content">
             <h2>Fresagem Linear e Circular (Centro Absoluto X0 Y0)</h2>
             <p style="font-size: 0.8rem; color: #a6e3a1; margin-bottom:15px;">Todas as coordenadas digitadas aqui terão como base o centro absoluto do bruto (X0 Y0).</p>
@@ -1385,7 +1427,6 @@
                 </div>
             </div>
 
-            <!-- NOVO: BOTAO E TABELA DA ABA 6 -->
             <button class="btn-secondary" onclick="adicionarLinearCirc()">+ Adicionar Operação Linear/Circular</button>
 
             <h2>Operações Lineares/Circulares Cadastradas</h2>
@@ -1536,7 +1577,7 @@
         {t: 4, diam: 12.0, rpm: 1600, avanco: 180, q: 4.0}
     ];
 
-    // NOVO: LISTA PARA ABA 6
+    let listaCavidadesCadastradas = [];
     let listaLinearCirc = [];
 
     // --- LÓGICA DO GERENCIADOR DE MÚLTIPLOS FACEAMENTOS ---
@@ -1672,6 +1713,106 @@
     function limparLinearCirc() {
         listaLinearCirc = [];
         renderizarTabelaLinearCirc();
+        atualizarSimulador();
+    }
+
+    // --- NOVA LÓGICA DO GERENCIADOR DE CAVIDADES (ABA 5) ---
+    function alternarFormatoCavidade() {
+        const formato = document.getElementById('cav_formato').value;
+        if (formato === 'CIRCULAR') {
+            document.getElementById('bloco_cavidade_retangular').style.display = 'none';
+            document.getElementById('bloco_cavidade_circular').style.display = 'block';
+        } else {
+            document.getElementById('bloco_cavidade_retangular').style.display = 'block';
+            document.getElementById('bloco_cavidade_circular').style.display = 'none';
+        }
+        validarCavidade();
+    }
+
+    function renderizarTabelaCavidades() {
+        const tbody = document.getElementById('corpoTabelaCavidades');
+        tbody.innerHTML = '';
+
+        if (listaCavidadesCadastradas.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="color:#888;">Nenhuma cavidade cadastrada.</td></tr>`;
+            return;
+        }
+
+        listaCavidadesCadastradas.forEach((cav, index) => {
+            let descFormato = cav.formato === 'CIRCULAR' ? `Circular Ø${cav.diamCirc}` : `Ret. ${cav.dimX}x${cav.dimY}`;
+            let descPosicao = cav.modoPosicao === 'UNICA' ? `Única (${cav.centros[0].x}, ${cav.centros[0].y})` : `Malha (${cav.centros.length} pts)`;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${descFormato}</td>
+                <td>${descPosicao}</td>
+                <td>T${cav.fresaT} (Ø${cav.fresaDiam})</td>
+                <td>-${cav.zFinalAbs.toFixed(1)}</td>
+                <td><button class="btn-del" onclick="removerCavidade(${index})">X</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function adicionarCavidade() {
+        if (!validarCavidade()) return;
+
+        const zAprox = parseFloat(document.getElementById('cav_zAprox').value) || 5.0;
+        const zInicial = parseFloat(document.getElementById('cav_zInicial').value) || 0.0;
+        if (!validarZAproximacao(zAprox, zInicial, "CAVIDADE COM ALÍVIO")) return;
+
+        const formato = document.getElementById('cav_formato').value;
+        const modoPosicao = document.getElementById('cav_modoPosicao').value;
+        const dimX = parseFloat(document.getElementById('cav_dimX').value) || 100.0;
+        const dimY = parseFloat(document.getElementById('cav_dimY').value) || 60.0;
+        const diamCirc = parseFloat(document.getElementById('cav_diamCirc').value) || 60.0;
+
+        const centros = obterCentrosCavidades();
+
+        const execAlivio = document.getElementById('cav_execAlivio').checked;
+        const alivioOffX = parseFloat(document.getElementById('cav_alivioOffX').value) || 0.0;
+        const alivioOffY = parseFloat(document.getElementById('cav_alivioOffY').value) || 0.0;
+        const brocasSnap = JSON.parse(JSON.stringify(listaBrocasAlivio));
+
+        const fresaT = parseInt(document.getElementById('cav_fresaT').value) || 10;
+        const fresaDiam = parseFloat(document.getElementById('cav_fresaDiam').value) || 16.0;
+        const fresaRpm = parseInt(document.getElementById('cav_fresaRpm').value) || 2800;
+        const fresaAvanco = parseInt(document.getElementById('cav_fresaAvanco').value) || 1000;
+        const passoPct = parseFloat(document.getElementById('cav_passoLateral').value) || 0.6;
+
+        const execContorno = document.getElementById('cav_execContornoRaio').checked;
+        const acabT = parseInt(document.getElementById('cav_acabT').value) || 6;
+        const acabDiam = parseFloat(document.getElementById('cav_acabDiam').value) || 6.0;
+        const acabRpm = parseInt(document.getElementById('cav_acabRpm').value) || 3800;
+        const acabAvanco = parseInt(document.getElementById('cav_acabAvanco').value) || 800;
+        const sobremetalParedes = parseFloat(document.getElementById('cav_sobremetalParedes').value) || 0.3;
+
+        const zPasse = Math.abs(parseFloat(document.getElementById('cav_zPasse').value)) || 2.0;
+        const zFinalAbs = Math.abs(parseFloat(document.getElementById('cav_zFinal').value)) || 15.0;
+
+        let novaCavidade = {
+            formato, modoPosicao, dimX, dimY, diamCirc, centros,
+            execAlivio, alivioOffX, alivioOffY, brocas: brocasSnap,
+            fresaT, fresaDiam, fresaRpm, fresaAvanco, passoPct,
+            execContorno, acabT, acabDiam, acabRpm, acabAvanco, sobremetalParedes,
+            zAprox, zInicial, zPasse, zFinalAbs
+        };
+
+        listaCavidadesCadastradas.push(novaCavidade);
+        renderizarTabelaCavidades();
+        atualizarSimulador();
+    }
+
+    function removerCavidade(index) {
+        listaCavidadesCadastradas.splice(index, 1);
+        renderizarTabelaCavidades();
+        atualizarSimulador();
+    }
+
+    function limparCavidades() {
+        listaCavidadesCadastradas = [];
+        renderizarTabelaCavidades();
         atualizarSimulador();
     }
 
@@ -1855,40 +1996,45 @@
             });
         }
 
-        // 5. CAVIDADE E ALÍVIO
-        if (document.getElementById('chk_cavidade').checked) {
-            const dimX = parseFloat(document.getElementById('cav_dimX').value) || 100;
-            const dimY = parseFloat(document.getElementById('cav_dimY').value) || 60;
-            const execAlivio = document.getElementById('cav_execAlivio').checked;
-            const offX = parseFloat(document.getElementById('cav_alivioOffX').value) || 0;
-            const offY = parseFloat(document.getElementById('cav_alivioOffY').value) || 0;
-            const cavDiam = parseFloat(document.getElementById('cav_fresaDiam').value) || 16;
-            const cavZFinal = -Math.abs(parseFloat(document.getElementById('cav_zFinal').value) || 15);
+        // 5. CAVIDADE E ALÍVIO (ARRAY)
+        if (document.getElementById('chk_cavidade').checked && listaCavidadesCadastradas.length > 0) {
+            listaCavidadesCadastradas.forEach(cav => {
+                cav.centros.forEach(cnt => {
+                    if (cav.execAlivio && cav.brocas.length > 0) {
+                        let b = cav.brocas[0];
+                        trajetoSimulacaoTotal.push({ x: cnt.x + cav.alivioOffX, y: cnt.y + cav.alivioOffY, z: 5, diam: b.diam, cor: '#f9e2af' });
+                        trajetoSimulacaoTotal.push({ x: cnt.x + cav.alivioOffX, y: cnt.y + cav.alivioOffY, z: -cav.zFinalAbs, diam: b.diam, cor: '#f9e2af' });
+                        trajetoSimulacaoTotal.push({ x: cnt.x + cav.alivioOffX, y: cnt.y + cav.alivioOffY, z: 5, diam: b.diam, cor: '#f9e2af' });
+                    }
 
-            let centros = obterCentrosCavidades();
+                    if (cav.formato === 'CIRCULAR') {
+                        let rReal = (cav.diamCirc / 2) - (cav.fresaDiam / 2);
+                        if (rReal < 0) rReal = 0;
+                        for (let a = 0; a <= 360; a += 10) {
+                            let rad = a * Math.PI / 180;
+                            trajetoSimulacaoTotal.push({
+                                x: cnt.x + rReal * Math.cos(rad),
+                                y: cnt.y + rReal * Math.sin(rad),
+                                z: -cav.zFinalAbs, diam: cav.fresaDiam, cor: '#89dceb'
+                            });
+                        }
+                    } else {
+                        let minX = cnt.x - cav.dimX / 2 + cav.fresaDiam / 2;
+                        let maxX = cnt.x + cav.dimX / 2 - cav.fresaDiam / 2;
+                        let minY = cnt.y - cav.dimY / 2 + cav.fresaDiam / 2;
+                        let maxY = cnt.y + cav.dimY / 2 - cav.fresaDiam / 2;
 
-            centros.forEach(cnt => {
-                if (execAlivio && listaBrocasAlivio.length > 0) {
-                    let b = listaBrocasAlivio[0];
-                    trajetoSimulacaoTotal.push({ x: cnt.x + offX, y: cnt.y + offY, z: 5, diam: b.diam, cor: '#f9e2af' });
-                    trajetoSimulacaoTotal.push({ x: cnt.x + offX, y: cnt.y + offY, z: cavZFinal, diam: b.diam, cor: '#f9e2af' });
-                    trajetoSimulacaoTotal.push({ x: cnt.x + offX, y: cnt.y + offY, z: 5, diam: b.diam, cor: '#f9e2af' });
-                }
-
-                let minX = cnt.x - dimX / 2 + cavDiam / 2;
-                let maxX = cnt.x + dimX / 2 - cavDiam / 2;
-                let minY = cnt.y - dimY / 2 + cavDiam / 2;
-                let maxY = cnt.y + dimY / 2 - cavDiam / 2;
-
-                trajetoSimulacaoTotal.push({ x: minX, y: minY, z: cavZFinal, diam: cavDiam, cor: '#89dceb' });
-                trajetoSimulacaoTotal.push({ x: maxX, y: minY, z: cavZFinal, diam: cavDiam, cor: '#89dceb' });
-                trajetoSimulacaoTotal.push({ x: maxX, y: maxY, z: cavZFinal, diam: cavDiam, cor: '#89dceb' });
-                trajetoSimulacaoTotal.push({ x: minX, y: maxY, z: cavZFinal, diam: cavDiam, cor: '#89dceb' });
-                trajetoSimulacaoTotal.push({ x: minX, y: minY, z: cavZFinal, diam: cavDiam, cor: '#89dceb' });
+                        trajetoSimulacaoTotal.push({ x: minX, y: minY, z: -cav.zFinalAbs, diam: cav.fresaDiam, cor: '#89dceb' });
+                        trajetoSimulacaoTotal.push({ x: maxX, y: minY, z: -cav.zFinalAbs, diam: cav.fresaDiam, cor: '#89dceb' });
+                        trajetoSimulacaoTotal.push({ x: maxX, y: maxY, z: -cav.zFinalAbs, diam: cav.fresaDiam, cor: '#89dceb' });
+                        trajetoSimulacaoTotal.push({ x: minX, y: maxY, z: -cav.zFinalAbs, diam: cav.fresaDiam, cor: '#89dceb' });
+                        trajetoSimulacaoTotal.push({ x: minX, y: minY, z: -cav.zFinalAbs, diam: cav.fresaDiam, cor: '#89dceb' });
+                    }
+                });
             });
         }
 
-        // 6. LINEAR E CIRCULAR (ADAPTADO PARA ARRAY)
+        // 6. LINEAR E CIRCULAR (ARRAY)
         if (document.getElementById('chk_linear').checked && listaLinearCirc.length > 0) {
             listaLinearCirc.forEach(op => {
                 const linDiam = op.diam;
@@ -2556,8 +2702,10 @@
     }
 
     function validarCavidade() {
+        const formato = document.getElementById('cav_formato').value;
         const dimX = parseFloat(document.getElementById('cav_dimX').value) || 0;
         const dimY = parseFloat(document.getElementById('cav_dimY').value) || 0;
+        const diamCirc = parseFloat(document.getElementById('cav_diamCirc').value) || 0;
         const alivioOffX = parseFloat(document.getElementById('cav_alivioOffX').value) || 0;
         const alivioOffY = parseFloat(document.getElementById('cav_alivioOffY').value) || 0;
 
@@ -2568,19 +2716,23 @@
         const execContorno = document.getElementById('cav_execContornoRaio').checked;
 
         const statusBox = document.getElementById('statusCavidade');
-        const btn = document.getElementById('btnGerarCavidade');
+        // Usamos botões tanto da tabela quanto direto, então evitamos erro se for null
 
-        if (fresaDiam >= dimX || fresaDiam >= dimY) {
+        if (formato === 'RETANGULAR' && (fresaDiam >= dimX || fresaDiam >= dimY)) {
             statusBox.className = "status-box error";
             statusBox.innerHTML = `ERRO: Diâmetro da fresa de desbaste (${fresaDiam} mm) deve ser menor que as dimensões da cavidade (${dimX}x${dimY} mm)!`;
-            if (btn) btn.disabled = true;
+            return false;
+        }
+
+        if (formato === 'CIRCULAR' && fresaDiam >= diamCirc) {
+            statusBox.className = "status-box error";
+            statusBox.innerHTML = `ERRO: Diâmetro da fresa de desbaste (${fresaDiam} mm) deve ser MENOR que o diâmetro da cavidade circular (${diamCirc} mm)!`;
             return false;
         }
 
         if (execContorno && acabDiam >= fresaDiam) {
             statusBox.className = "status-box error";
             statusBox.innerHTML = `ERRO: Diâmetro da fresa de acabamento (${acabDiam} mm) deve ser MENOR que a fresa de desbaste (${fresaDiam} mm) para reduzir o raio dos cantos!`;
-            if (btn) btn.disabled = true;
             return false;
         }
 
@@ -2588,34 +2740,43 @@
             if (listaBrocasAlivio.length === 0) {
                 statusBox.className = "status-box error";
                 statusBox.innerHTML = `ERRO: Cadastre pelo menos uma broca na tabela de alívio!`;
-                if (btn) btn.disabled = true;
                 return false;
             }
 
             let maiorBroca = listaBrocasAlivio[listaBrocasAlivio.length - 1];
             let brocaDiam = maiorBroca.diam;
 
-            const minPermitidoX = -(dimX / 2) + (brocaDiam / 2);
-            const maxPermitidoX = (dimX / 2) - (brocaDiam / 2);
-            const minPermitidoY = -(dimY / 2) + (brocaDiam / 2);
-            const maxPermitidoY = (dimY / 2) - (brocaDiam / 2);
+            if (formato === 'RETANGULAR') {
+                const minPermitidoX = -(dimX / 2) + (brocaDiam / 2);
+                const maxPermitidoX = (dimX / 2) - (brocaDiam / 2);
+                const minPermitidoY = -(dimY / 2) + (brocaDiam / 2);
+                const maxPermitidoY = (dimY / 2) - (brocaDiam / 2);
 
-            if (alivioOffX < minPermitidoX || alivioOffX > maxPermitidoX || alivioOffY < minPermitidoY || alivioOffY > maxPermitidoY) {
-                statusBox.className = "status-box error";
-                statusBox.innerHTML = `ERRO: Offset do alívio (${alivioOffX}, ${alivioOffY}) ultrapassa os limites internos da cavidade com a broca maior Ø${brocaDiam}mm!`;
-                if (btn) btn.disabled = true;
-                return false;
+                if (alivioOffX < minPermitidoX || alivioOffX > maxPermitidoX || alivioOffY < minPermitidoY || alivioOffY > maxPermitidoY) {
+                    statusBox.className = "status-box error";
+                    statusBox.innerHTML = `ERRO: Offset do alívio ultrapassa os limites da cavidade com a broca Ø${brocaDiam}mm!`;
+                    return false;
+                }
+            } else {
+                let distAoCentro = Math.sqrt(alivioOffX*alivioOffX + alivioOffY*alivioOffY);
+                if ((distAoCentro + brocaDiam/2) > diamCirc/2) {
+                    statusBox.className = "status-box error";
+                    statusBox.innerHTML = `ERRO: Offset do alívio sai fora do limite da cavidade circular (Raio interno livre excedido).`;
+                    return false;
+                }
             }
         }
 
         const centros = obterCentrosCavidades();
-        let msg = `OK: ${centros.length} cavidade(s) ${dimX}x${dimY}mm válida(s).`;
-        if (execAlivio) msg += ` Alívio com ${listaBrocasAlivio.length} broca(s).`;
-        if (execContorno) msg += ` Contorno com Ø${acabDiam}mm.`;
-
+        let msg = '';
+        if (formato === 'RETANGULAR') {
+            msg = `OK: ${centros.length} cavidade(s) ${dimX}x${dimY}mm pronta(s) para adicionar.`;
+        } else {
+            msg = `OK: ${centros.length} cavidade(s) Circular Ø${diamCirc}mm pronta(s) para adicionar.`;
+        }
+        
         statusBox.className = "status-box ok";
         statusBox.innerHTML = msg;
-        if (btn) btn.disabled = false;
         return true;
     }
 
@@ -3012,184 +3173,191 @@
         return gcode;
     }
 
+    // --- NOVA LÓGICA GERADORA DE CAVIDADES COM ARRAY E CÍRCULOS (ABA 5) ---
     function obterBlocoCavidade(zeroPeca, oleo, useM01) {
-        if (!validarCavidade()) return null;
-
-        const dimX = parseFloat(document.getElementById('cav_dimX').value);
-        const dimY = parseFloat(document.getElementById('cav_dimY').value);
-        const centros = obterCentrosCavidades();
-
-        const execAlivio = document.getElementById('cav_execAlivio').checked;
-        const alivioOffX = parseFloat(document.getElementById('cav_alivioOffX').value);
-        const alivioOffY = parseFloat(document.getElementById('cav_alivioOffY').value);
-
-        const fresaT = parseInt(document.getElementById('cav_fresaT').value);
-        const fresaDiam = parseFloat(document.getElementById('cav_fresaDiam').value);
-        const fresaRpm = parseInt(document.getElementById('cav_fresaRpm').value);
-        const fresaAvanco = parseInt(document.getElementById('cav_fresaAvanco').value);
-        const passoPct = parseFloat(document.getElementById('cav_passoLateral').value);
-
-        const execContorno = document.getElementById('cav_execContornoRaio').checked;
-        const acabT = parseInt(document.getElementById('cav_acabT').value);
-        const acabDiam = parseFloat(document.getElementById('cav_acabDiam').value);
-        const acabRpm = parseInt(document.getElementById('cav_acabRpm').value);
-        const acabAvanco = parseInt(document.getElementById('cav_acabAvanco').value);
-        const sobremetalParedes = parseFloat(document.getElementById('cav_sobremetalParedes').value);
-
-        const zAprox = parseFloat(document.getElementById('cav_zAprox').value);
-        const zInicial = parseFloat(document.getElementById('cav_zInicial').value);
-        const zPasse = Math.abs(parseFloat(document.getElementById('cav_zPasse').value));
-        const zFinalAbs = Math.abs(parseFloat(document.getElementById('cav_zFinal').value));
-
-        if (!validarZAproximacao(zAprox, zInicial, "CAVIDADE COM ALÍVIO")) return null;
-
-        let gcode = `(INICIO-DA-TAREFA-CAVIDADE-RETA)\n`;
-
-        if (execAlivio) {
-            listaBrocasAlivio.forEach((broca) => {
-                gcode += `T${broca.t}M6\n`;
-                if (useM01) gcode += `M01\n`;
-                gcode += `G43H${broca.t}G0Z150\n`;
-                gcode += `S${broca.rpm}M3\n`;
-                gcode += `${oleo}\n`;
-
-                let primeiroFuro = true;
-                centros.forEach(c => {
-                    let ptX = c.x + alivioOffX;
-                    let ptY = c.y + alivioOffY;
-
-                    if (primeiroFuro) {
-                        gcode += `G0X${ptX.toFixed(2)}Y${ptY.toFixed(2)}\n`;
-                        gcode += `G0Z${zAprox.toFixed(1)}\n`;
-                        gcode += `G83Z-${zFinalAbs.toFixed(2)}R${zAprox.toFixed(1)}Q${broca.q.toFixed(2)}F${broca.avanco}\n`;
-                        primeiroFuro = false;
-                    } else {
-                        gcode += `X${ptX.toFixed(2)}Y${ptY.toFixed(2)}\n`;
-                    }
-                });
-
-                gcode += `G80\n`;
-                gcode += `G0Z150\n`;
-                gcode += `M05M9\n\n`;
-            });
+        if (listaCavidadesCadastradas.length === 0) {
+            alert("A lista de cavidades cadastradas está vazia! Adicione pelo menos uma operação na Aba 5.");
+            return null;
         }
 
-        gcode += `T${fresaT}M6\n`;
-        if (useM01) gcode += `M01\n`;
-        gcode += `G43H${fresaT}G0Z150\n`;
-        gcode += `S${fresaRpm}M3\n`;
-        gcode += `${oleo}\n`;
+        let gcode = `(INICIO-DA-TAREFA-CAVIDADES-MULTIPLAS)\n`;
 
-        let folgaDesbaste = execContorno ? sobremetalParedes : 0.0;
-        let passoLatMM = fresaDiam * passoPct;
+        listaCavidadesCadastradas.forEach((cav, index) => {
+            gcode += `(CAVIDADE-CADASTRADA-${index + 1})\n`;
 
-        centros.forEach((centro) => {
-            let centroX = centro.x;
-            let centroY = centro.y;
-            let pontoMergulhoX = execAlivio ? (centroX + alivioOffX) : centroX;
-            let pontoMergulhoY = execAlivio ? (centroY + alivioOffY) : centroY;
+            // ALÍVIO DA CAVIDADE
+            if (cav.execAlivio && cav.brocas.length > 0) {
+                cav.brocas.forEach((broca) => {
+                    gcode += `T${broca.t}M6\n`;
+                    if (useM01) gcode += `M01\n`;
+                    gcode += `G43H${broca.t}G0Z150\n`;
+                    gcode += `S${broca.rpm}M3\n`;
+                    gcode += `${oleo}\n`;
 
-            let minBoundaryX = centroX - (dimX / 2) + (fresaDiam / 2) + folgaDesbaste;
-            let maxBoundaryX = centroX + (dimX / 2) - (fresaDiam / 2) - folgaDesbaste;
-            let minBoundaryY = centroY - (dimY / 2) + (fresaDiam / 2) + folgaDesbaste;
-            let maxBoundaryY = centroY + (dimY / 2) - (fresaDiam / 2) - folgaDesbaste;
+                    let primeiroFuro = true;
+                    cav.centros.forEach(c => {
+                        let ptX = c.x + cav.alivioOffX;
+                        let ptY = c.y + cav.alivioOffY;
 
-            let zAtual = zInicial;
-
-            while (zAtual < zFinalAbs) {
-                let zProximo = zAtual + zPasse;
-                if (zProximo > zFinalAbs) zProximo = zFinalAbs;
-
-                gcode += `G0X${pontoMergulhoX.toFixed(2)}Y${pontoMergulhoY.toFixed(2)}\n`;
-                gcode += `G0Z${zAprox.toFixed(1)}\n`;
-                gcode += `G1Z-${zProximo.toFixed(2)}F${fresaAvanco}\n`;
-
-                let currMinX = pontoMergulhoX;
-                let currMaxX = pontoMergulhoX;
-                let currMinY = pontoMergulhoY;
-                let currMaxY = pontoMergulhoY;
-
-                let expansaoConcluida = false;
-
-                while (!expansaoConcluida) {
-                    currMinX -= passoLatMM;
-                    currMaxX += passoLatMM;
-                    currMinY -= passoLatMM;
-                    currMaxY += passoLatMM;
-
-                    if (currMinX < minBoundaryX) currMinX = minBoundaryX;
-                    if (currMaxX > maxBoundaryX) currMaxX = maxBoundaryX;
-                    if (currMinY < minBoundaryY) currMinY = minBoundaryY;
-                    if (currMaxY > maxBoundaryY) currMaxY = maxBoundaryY;
-
-                    gcode += `G1X${currMaxX.toFixed(2)}Y${currMinY.toFixed(2)}\n`;
-                    gcode += `Y${currMaxY.toFixed(2)}\n`;
-                    gcode += `X${currMinX.toFixed(2)}\n`;
-                    gcode += `Y${currMinY.toFixed(2)}\n`;
-                    gcode += `X${currMaxX.toFixed(2)}\n`;
-
-                    if (currMinX === minBoundaryX && currMaxX === maxBoundaryX &&
-                        currMinY === minBoundaryY && currMaxY === maxBoundaryY) {
-                        expansaoConcluida = true;
-                    }
-                }
-
-                gcode += `G0Z${zAprox.toFixed(1)}\n`;
-                zAtual = zProximo;
+                        if (primeiroFuro) {
+                            gcode += `G0X${ptX.toFixed(2)}Y${ptY.toFixed(2)}\n`;
+                            gcode += `G0Z${cav.zAprox.toFixed(1)}\n`;
+                            gcode += `G83Z-${cav.zFinalAbs.toFixed(2)}R${cav.zAprox.toFixed(1)}Q${broca.q.toFixed(2)}F${broca.avanco}\n`;
+                            primeiroFuro = false;
+                        } else {
+                            gcode += `X${ptX.toFixed(2)}Y${ptY.toFixed(2)}\n`;
+                        }
+                    });
+                    gcode += `G80\n`;
+                    gcode += `G0Z150\n`;
+                    gcode += `M05M9\n\n`;
+                });
             }
-        });
 
-        gcode += `G0Z150\n`;
-        gcode += `M05M9\n\n`;
-
-        if (execContorno) {
-            gcode += `(INICIO-DA-TAREFA-ACAB.CAVIDADE)\n`;
-            gcode += `T${acabT}M6\n`;
+            // DESBASTE DA CAVIDADE
+            gcode += `T${cav.fresaT}M6\n`;
             if (useM01) gcode += `M01\n`;
-            gcode += `G43H${acabT}G0Z150\n`;
-            gcode += `S${acabRpm}M3\n`;
+            gcode += `G43H${cav.fresaT}G0Z150\n`;
+            gcode += `S${cav.fresaRpm}M3\n`;
             gcode += `${oleo}\n`;
 
-            centros.forEach((centro) => {
-                let centroX = centro.x;
-                let centroY = centro.y;
-                let pontoMergulhoX = execAlivio ? (centroX + alivioOffX) : centroX;
-                let pontoMergulhoY = execAlivio ? (centroY + alivioOffY) : centroY;
+            let folgaDesbaste = cav.execContorno ? cav.sobremetalParedes : 0.0;
+            let passoLatMM = cav.fresaDiam * cav.passoPct;
 
-                let contornoMinX = centroX - (dimX / 2) + (acabDiam / 2);
-                let contornoMaxX = centroX + (dimX / 2) - (acabDiam / 2);
-                let contornoMinY = centroY - (dimY / 2) + (acabDiam / 2);
-                let contornoMaxY = centroY + (dimY / 2) - (acabDiam / 2);
+            cav.centros.forEach((centro) => {
+                let pontoMergulhoX = cav.execAlivio ? (centro.x + cav.alivioOffX) : centro.x;
+                let pontoMergulhoY = cav.execAlivio ? (centro.y + cav.alivioOffY) : centro.y;
 
-                let zAtual = zInicial;
-
-                while (zAtual < zFinalAbs) {
-                    let zProximo = zAtual + zPasse;
-                    if (zProximo > zFinalAbs) zProximo = zFinalAbs;
+                let zAtual = cav.zInicial;
+                while (zAtual < cav.zFinalAbs) {
+                    let zProximo = zAtual + cav.zPasse;
+                    if (zProximo > cav.zFinalAbs) zProximo = cav.zFinalAbs;
 
                     gcode += `G0X${pontoMergulhoX.toFixed(2)}Y${pontoMergulhoY.toFixed(2)}\n`;
-                    gcode += `G0Z${zAprox.toFixed(1)}\n`;
-                    gcode += `G1Z-${zProximo.toFixed(2)}F${acabAvanco}\n`;
+                    gcode += `G0Z${cav.zAprox.toFixed(1)}\n`;
+                    gcode += `G1Z-${zProximo.toFixed(2)}F${cav.fresaAvanco}\n`;
 
-                    gcode += `G1X${contornoMaxX.toFixed(2)}Y${contornoMinY.toFixed(2)}\n`;
-                    gcode += `Y${contornoMaxY.toFixed(2)}\n`;
-                    gcode += `X${contornoMinX.toFixed(2)}\n`;
-                    gcode += `Y${contornoMinY.toFixed(2)}\n`;
-                    gcode += `X${contornoMaxX.toFixed(2)}\n`;
+                    if (cav.formato === 'CIRCULAR') {
+                        let maxRaio = (cav.diamCirc / 2) - (cav.fresaDiam / 2) - folgaDesbaste;
+                        if(maxRaio <= 0) maxRaio = 0.01;
 
-                    gcode += `G0Z${zAprox.toFixed(1)}\n`;
+                        if (pontoMergulhoX !== centro.x || pontoMergulhoY !== centro.y) {
+                            gcode += `G1X${centro.x.toFixed(2)}Y${centro.y.toFixed(2)}F${cav.fresaAvanco}\n`;
+                        }
+
+                        let currRaio = 0;
+                        let expansaoConcluida = false;
+                        while (!expansaoConcluida) {
+                            currRaio += passoLatMM;
+                            if (currRaio >= maxRaio) {
+                                currRaio = maxRaio;
+                                expansaoConcluida = true;
+                            }
+                            gcode += `G1Y${(centro.y + currRaio).toFixed(2)}\n`;
+                            gcode += `G2J-${currRaio.toFixed(3)}\n`;
+                        }
+                        gcode += `G1Y${centro.y.toFixed(2)}\n`;
+                    } else {
+                        // RETANGULAR
+                        let minBoundaryX = centro.x - (cav.dimX / 2) + (cav.fresaDiam / 2) + folgaDesbaste;
+                        let maxBoundaryX = centro.x + (cav.dimX / 2) - (cav.fresaDiam / 2) - folgaDesbaste;
+                        let minBoundaryY = centro.y - (cav.dimY / 2) + (cav.fresaDiam / 2) + folgaDesbaste;
+                        let maxBoundaryY = centro.y + (cav.dimY / 2) - (cav.fresaDiam / 2) - folgaDesbaste;
+
+                        let currMinX = pontoMergulhoX;
+                        let currMaxX = pontoMergulhoX;
+                        let currMinY = pontoMergulhoY;
+                        let currMaxY = pontoMergulhoY;
+
+                        let expansaoConcluida = false;
+                        while (!expansaoConcluida) {
+                            currMinX -= passoLatMM;
+                            currMaxX += passoLatMM;
+                            currMinY -= passoLatMM;
+                            currMaxY += passoLatMM;
+
+                            if (currMinX < minBoundaryX) currMinX = minBoundaryX;
+                            if (currMaxX > maxBoundaryX) currMaxX = maxBoundaryX;
+                            if (currMinY < minBoundaryY) currMinY = minBoundaryY;
+                            if (currMaxY > maxBoundaryY) currMaxY = maxBoundaryY;
+
+                            gcode += `G1X${currMaxX.toFixed(2)}Y${currMinY.toFixed(2)}\n`;
+                            gcode += `Y${currMaxY.toFixed(2)}\n`;
+                            gcode += `X${currMinX.toFixed(2)}\n`;
+                            gcode += `Y${currMinY.toFixed(2)}\n`;
+                            gcode += `X${currMaxX.toFixed(2)}\n`;
+
+                            if (currMinX === minBoundaryX && currMaxX === maxBoundaryX &&
+                                currMinY === minBoundaryY && currMaxY === maxBoundaryY) {
+                                expansaoConcluida = true;
+                            }
+                        }
+                    }
+
+                    gcode += `G0Z${cav.zAprox.toFixed(1)}\n`;
                     zAtual = zProximo;
                 }
             });
 
             gcode += `G0Z150\n`;
             gcode += `M05M9\n\n`;
-        }
+
+            // ACABAMENTO/CONTORNO DA CAVIDADE
+            if (cav.execContorno) {
+                gcode += `(ACABAMENTO-CAVIDADE-${index + 1})\n`;
+                gcode += `T${cav.acabT}M6\n`;
+                if (useM01) gcode += `M01\n`;
+                gcode += `G43H${cav.acabT}G0Z150\n`;
+                gcode += `S${cav.acabRpm}M3\n`;
+                gcode += `${oleo}\n`;
+
+                cav.centros.forEach((centro) => {
+                    let pontoMergulhoX = cav.execAlivio ? (centro.x + cav.alivioOffX) : centro.x;
+                    let pontoMergulhoY = cav.execAlivio ? (centro.y + cav.alivioOffY) : centro.y;
+
+                    let zAtual = cav.zInicial;
+                    while (zAtual < cav.zFinalAbs) {
+                        let zProximo = zAtual + cav.zPasse;
+                        if (zProximo > cav.zFinalAbs) zProximo = cav.zFinalAbs;
+
+                        gcode += `G0X${pontoMergulhoX.toFixed(2)}Y${pontoMergulhoY.toFixed(2)}\n`;
+                        gcode += `G0Z${cav.zAprox.toFixed(1)}\n`;
+                        gcode += `G1Z-${zProximo.toFixed(2)}F${cav.acabAvanco}\n`;
+
+                        if (cav.formato === 'CIRCULAR') {
+                            let maxRaioAcab = (cav.diamCirc / 2) - (cav.acabDiam / 2);
+                            if (pontoMergulhoX !== centro.x || pontoMergulhoY !== centro.y) {
+                                gcode += `G1X${centro.x.toFixed(2)}Y${centro.y.toFixed(2)}F${cav.acabAvanco}\n`;
+                            }
+                            gcode += `G1Y${(centro.y + maxRaioAcab).toFixed(2)}\n`;
+                            gcode += `G2J-${maxRaioAcab.toFixed(3)}\n`;
+                            gcode += `G1Y${centro.y.toFixed(2)}\n`;
+                        } else {
+                            let contornoMinX = centro.x - (cav.dimX / 2) + (cav.acabDiam / 2);
+                            let contornoMaxX = centro.x + (cav.dimX / 2) - (cav.acabDiam / 2);
+                            let contornoMinY = centro.y - (cav.dimY / 2) + (cav.acabDiam / 2);
+                            let contornoMaxY = centro.y + (cav.dimY / 2) - (cav.acabDiam / 2);
+
+                            gcode += `G1X${contornoMaxX.toFixed(2)}Y${contornoMinY.toFixed(2)}\n`;
+                            gcode += `Y${contornoMaxY.toFixed(2)}\n`;
+                            gcode += `X${contornoMinX.toFixed(2)}\n`;
+                            gcode += `Y${contornoMinY.toFixed(2)}\n`;
+                            gcode += `X${contornoMaxX.toFixed(2)}\n`;
+                        }
+
+                        gcode += `G0Z${cav.zAprox.toFixed(1)}\n`;
+                        zAtual = zProximo;
+                    }
+                });
+                gcode += `G0Z150\n`;
+                gcode += `M05M9\n\n`;
+            }
+        });
 
         return gcode;
     }
 
-    // --- NOVA LÓGICA GERADORA DA ABA LINEAR/CIRCULAR (LOOP DE ARRAY) ---
+    // --- LÓGICA GERADORA DA ABA LINEAR/CIRCULAR ---
     function obterBlocoLinear(zeroPeca, oleo, useM01) {
         if (listaLinearCirc.length === 0) {
             alert("A lista de fresagem linear/circular está vazia! Adicione pelo menos uma operação na Aba 6.");
@@ -3517,38 +3685,34 @@
             operacoesResumo.push(`- Lista de Furações (${listaFurosCustom.length} furos): Tempo ~ ${tempoFuração.toFixed(2)} min`);
         }
 
-        if (incCav) {
-            const centros = obterCentrosCavidades();
-            const execAlivio = document.getElementById('cav_execAlivio').checked;
-            const execContorno = document.getElementById('cav_execContornoRaio').checked;
-            const fresaT = parseInt(document.getElementById('cav_fresaT').value);
-            const fresaDiam = parseFloat(document.getElementById('cav_fresaDiam').value);
-            const acabT = parseInt(document.getElementById('cav_acabT').value);
-            const acabDiam = parseFloat(document.getElementById('cav_acabDiam').value);
-            const zFinal = Math.abs(parseFloat(document.getElementById('cav_zFinal').value));
+        // NOVO CÁLCULO DE RELATÓRIO PARA MÚLTIPLAS CAVIDADES (RET/CIRC)
+        if (incCav && listaCavidadesCadastradas.length > 0) {
+            let tempoCavTotal = 0;
+            listaCavidadesCadastradas.forEach((cav, idx) => {
+                if (cav.execAlivio) {
+                    cav.brocas.forEach(b => {
+                        ferramentasUsadas.push({ t: b.t, diam: b.diam, tipo: 'Broca Pré-Furo Alívio' });
+                    });
+                }
+                ferramentasUsadas.push({ t: cav.fresaT, diam: cav.fresaDiam, tipo: 'Fresa Desbaste Cavidade' });
+                if (cav.execContorno) {
+                    ferramentasUsadas.push({ t: cav.acabT, diam: cav.acabDiam, tipo: 'Fresa Acab. Cavidade' });
+                }
 
-            if (execAlivio) {
-                listaBrocasAlivio.forEach(b => {
-                    ferramentasUsadas.push({ t: b.t, diam: b.diam, tipo: 'Broca Pré-Furo Alívio' });
-                });
-            }
-            ferramentasUsadas.push({ t: fresaT, diam: fresaDiam, tipo: 'Fresa Desbaste Cavidade' });
-
-            if (execContorno) {
-                ferramentasUsadas.push({ t: acabT, diam: acabDiam, tipo: 'Fresa Acabamento/Canto Cavidade' });
-            }
-
-            let tempoMin = centros.length * ((execAlivio ? listaBrocasAlivio.length * 0.8 : 0) + (zFinal * 0.3) + (execContorno ? 1.2 : 0));
-            tempoTotalMinutos += tempoMin;
-            operacoesResumo.push(`- Cavidades Retas [${centros.length} cavidade(s)] (${execAlivio ? listaBrocasAlivio.length + ' Broca(s) Alívio' : 'Sem Alívio'}${execContorno ? ' + Contorno Raio' : ''}): Profundidade Z = -${zFinal.toFixed(1)} mm | Tempo ~ ${tempoMin.toFixed(2)} min`);
+                let descFormato = cav.formato === 'CIRCULAR' ? `Circular Ø${cav.diamCirc}` : `Reta ${cav.dimX}x${cav.dimY}`;
+                let tempoMin = cav.centros.length * ((cav.execAlivio ? cav.brocas.length * 0.8 : 0) + (cav.zFinalAbs * 0.3) + (cav.execContorno ? 1.2 : 0));
+                tempoCavTotal += tempoMin;
+                
+                operacoesResumo.push(`- Cavidade ${idx + 1} (${descFormato}) [${cav.centros.length} centro(s)]: Profundidade Z = -${cav.zFinalAbs.toFixed(1)} mm | Tempo ~ ${tempoMin.toFixed(2)} min`);
+            });
+            tempoTotalMinutos += tempoCavTotal;
         }
         
-        // NOVO CÁLCULO DE TEMPO E FERRAMENTAS PARA ABA 6 (ADAPTADO)
         if (incLin && listaLinearCirc.length > 0) {
             let tempoLinTotal = 0;
             listaLinearCirc.forEach((op, idx) => {
                 ferramentasUsadas.push({ t: op.numT, diam: op.diam, tipo: `Fresa Lin/Circ (${op.tipo})` });
-                let tempoMin = (op.zFinal * 0.5) + 0.5; // Aproximação do tempo anterior
+                let tempoMin = (op.zFinal * 0.5) + 0.5;
                 tempoLinTotal += tempoMin;
                 operacoesResumo.push(`- Fresagem Linear/Circ ${idx + 1} (${op.tipo}): Profundidade Z = -${op.zFinal.toFixed(1)} mm | Tempo ~ ${tempoMin.toFixed(2)} min`);
             });
@@ -3593,7 +3757,9 @@
 
     window.onload = function() {
         renderizarTabelaFaceamentos();
-        renderizarTabelaLinearCirc(); // INICIALIZA A NOVA TABELA
+        renderizarTabelaCavidades(); // INICIALIZA A NOVA TABELA
+        renderizarTabelaLinearCirc();
+        alternarFormatoCavidade();   // INICIALIZA O FORMATO
         alternarAcabamentoMatriz();
         alternarAcabamentoContorno();
         alternarCamposPadrao();
