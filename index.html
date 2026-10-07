@@ -1351,7 +1351,7 @@
                 </div>
                 <div class="form-group">
                     <label for="lin_diam">Diâmetro da Fresa (mm):</label>
-                    <input type="number" id="lin_diam" value="10.0" step="0.1" oninput="atualizarSimulador()">
+                    <input type="number" id="lin_diam" value="10.0" step="0.1">
                 </div>
             </div>
             <div class="row-inputs">
@@ -1381,10 +1381,32 @@
                 </div>
                 <div class="form-group">
                     <label for="lin_zFinal">Z Final (mm):</label>
-                    <input type="number" id="lin_zFinal" value="10.0" step="0.1" oninput="atualizarSimulador()">
+                    <input type="number" id="lin_zFinal" value="10.0" step="0.1">
                 </div>
             </div>
 
+            <!-- NOVO: BOTAO E TABELA DA ABA 6 -->
+            <button class="btn-secondary" onclick="adicionarLinearCirc()">+ Adicionar Operação Linear/Circular</button>
+
+            <h2>Operações Lineares/Circulares Cadastradas</h2>
+            <table class="table-furos">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Tipo</th>
+                        <th>Início / Centro</th>
+                        <th>Fim / Raio</th>
+                        <th>T (Ø)</th>
+                        <th>Z Final</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoTabelaLinear">
+                    <!-- Preenchido via JavaScript -->
+                </tbody>
+            </table>
+
+            <button class="btn-secondary" style="background-color: var(--danger); margin-top: 6px;" onclick="limparLinearCirc()">Limpar Lista Linear/Circ.</button>
             <button class="btn-generate" onclick="gerarLinearCircular()">Gerar Apenas Fresagem Lin/Circ</button>
         </div>
 
@@ -1514,6 +1536,9 @@
         {t: 4, diam: 12.0, rpm: 1600, avanco: 180, q: 4.0}
     ];
 
+    // NOVO: LISTA PARA ABA 6
+    let listaLinearCirc = [];
+
     // --- LÓGICA DO GERENCIADOR DE MÚLTIPLOS FACEAMENTOS ---
     function renderizarTabelaFaceamentos() {
         const tbody = document.getElementById('corpoTabelaFaceamentos');
@@ -1564,6 +1589,89 @@
     function limparTodosFaceamentos() {
         listaFaceamentos = [];
         renderizarTabelaFaceamentos();
+        atualizarSimulador();
+    }
+
+    // --- NOVA LÓGICA DO GERENCIADOR LINEAR / CIRCULAR (ABA 6) ---
+    function renderizarTabelaLinearCirc() {
+        const tbody = document.getElementById('corpoTabelaLinear');
+        tbody.innerHTML = '';
+
+        if (listaLinearCirc.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="color:#888;">Nenhuma operação cadastrada.</td></tr>`;
+            return;
+        }
+
+        listaLinearCirc.forEach((op, index) => {
+            let txtInicio = '';
+            let txtFim = '';
+
+            if (op.tipo === 'CIRCULAR') {
+                txtInicio = `X${op.cX}, Y${op.cY}`;
+                txtFim = `Ø${op.circDiamDesejado} (${op.sentido})`;
+            } else {
+                txtInicio = `X${op.sx}, Y${op.sy}`;
+                txtFim = `X${op.ex}, Y${op.ey}`;
+            }
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${op.tipo}</td>
+                <td>${txtInicio}</td>
+                <td>${txtFim}</td>
+                <td>T${op.numT} (Ø${op.diam})</td>
+                <td>-${op.zFinal.toFixed(1)}</td>
+                <td><button class="btn-del" onclick="removerLinearCirc(${index})">X</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function adicionarLinearCirc() {
+        const numT = parseInt(document.getElementById('lin_numT').value) || 2;
+        const diam = parseFloat(document.getElementById('lin_diam').value) || 10.0;
+        const rpm = parseInt(document.getElementById('lin_rpm').value) || 2500;
+        const avanco = parseInt(document.getElementById('lin_avanco').value) || 800;
+        const zAprox = parseFloat(document.getElementById('lin_zAprox').value) || 5.0;
+        const zInicial = parseFloat(document.getElementById('lin_zInicial').value) || 0.0;
+        const zPasse = Math.abs(parseFloat(document.getElementById('lin_zPasse').value)) || 1.0;
+        const zFinal = Math.abs(parseFloat(document.getElementById('lin_zFinal').value)) || 10.0;
+        const tipo = document.getElementById('lin_tipo').value;
+
+        if (!validarZAproximacao(zAprox, zInicial, "FRESAGEM LINEAR/CIRCULAR")) return;
+
+        let op = { numT, diam, rpm, avanco, zAprox, zInicial, zPasse, zFinal, tipo };
+
+        if (tipo === 'CIRCULAR') {
+            op.cX = parseFloat(document.getElementById('lin_circCentroX').value) || 0;
+            op.cY = parseFloat(document.getElementById('lin_circCentroY').value) || 0;
+            op.circDiamDesejado = parseFloat(document.getElementById('lin_circDiam').value) || 50.0;
+            op.sentido = document.getElementById('lin_circSentido').value;
+        } else {
+            op.sx = parseFloat(document.getElementById('lin_startX').value) || 0;
+            op.sy = parseFloat(document.getElementById('lin_startY').value) || 0;
+            op.ex = parseFloat(document.getElementById('lin_endX').value) || 0;
+            op.ey = parseFloat(document.getElementById('lin_endY').value) || 0;
+
+            if (tipo === 'RETAX') op.ey = op.sy;
+            if (tipo === 'RETAY') op.ex = op.sx;
+        }
+
+        listaLinearCirc.push(op);
+        renderizarTabelaLinearCirc();
+        atualizarSimulador();
+    }
+
+    function removerLinearCirc(index) {
+        listaLinearCirc.splice(index, 1);
+        renderizarTabelaLinearCirc();
+        atualizarSimulador();
+    }
+
+    function limparLinearCirc() {
+        listaLinearCirc = [];
+        renderizarTabelaLinearCirc();
         atualizarSimulador();
     }
 
@@ -1780,42 +1888,30 @@
             });
         }
 
-        // 6. LINEAR E CIRCULAR
-        if (document.getElementById('chk_linear').checked) {
-            const linDiam = parseFloat(document.getElementById('lin_diam').value) || 10.0;
-            const linZ = -Math.abs(parseFloat(document.getElementById('lin_zFinal').value) || 10.0);
-            const tipo = document.getElementById('lin_tipo').value;
+        // 6. LINEAR E CIRCULAR (ADAPTADO PARA ARRAY)
+        if (document.getElementById('chk_linear').checked && listaLinearCirc.length > 0) {
+            listaLinearCirc.forEach(op => {
+                const linDiam = op.diam;
+                const linZ = -op.zFinal;
 
-            if (tipo === 'CIRCULAR') {
-                const cX = parseFloat(document.getElementById('lin_circCentroX').value) || 0;
-                const cY = parseFloat(document.getElementById('lin_circCentroY').value) || 0;
-                const diamDesejado = parseFloat(document.getElementById('lin_circDiam').value) || 50;
-                
-                const rReal = (diamDesejado / 2) - (linDiam / 2); 
-                
-                for (let a = 0; a <= 360; a += 10) {
-                    let rad = a * Math.PI / 180;
-                    trajetoSimulacaoTotal.push({
-                        x: cX + rReal * Math.cos(rad),
-                        y: cY + rReal * Math.sin(rad),
-                        z: linZ, diam: linDiam, cor: '#f5c2e7'
-                    });
+                if (op.tipo === 'CIRCULAR') {
+                    const rReal = (op.circDiamDesejado / 2) - (linDiam / 2); 
+                    for (let a = 0; a <= 360; a += 10) {
+                        let rad = a * Math.PI / 180;
+                        trajetoSimulacaoTotal.push({
+                            x: op.cX + rReal * Math.cos(rad),
+                            y: op.cY + rReal * Math.sin(rad),
+                            z: linZ, diam: linDiam, cor: '#f5c2e7'
+                        });
+                    }
+                } else {
+                    trajetoSimulacaoTotal.push({ x: op.sx, y: op.sy, z: 5, diam: linDiam, cor: '#f5c2e7' });
+                    trajetoSimulacaoTotal.push({ x: op.sx, y: op.sy, z: linZ, diam: linDiam, cor: '#f5c2e7' });
+                    trajetoSimulacaoTotal.push({ x: op.ex, y: op.ey, z: linZ, diam: linDiam, cor: '#f5c2e7' });
+                    trajetoSimulacaoTotal.push({ x: op.sx, y: op.sy, z: linZ, diam: linDiam, cor: '#f5c2e7' }); 
+                    trajetoSimulacaoTotal.push({ x: op.sx, y: op.sy, z: 5, diam: linDiam, cor: '#f5c2e7' });
                 }
-            } else {
-                let sx = parseFloat(document.getElementById('lin_startX').value) || 0;
-                let sy = parseFloat(document.getElementById('lin_startY').value) || 0;
-                let ex = parseFloat(document.getElementById('lin_endX').value) || 0;
-                let ey = parseFloat(document.getElementById('lin_endY').value) || 0;
-
-                if (tipo === 'RETAX') ey = sy;
-                if (tipo === 'RETAY') ex = sx;
-
-                trajetoSimulacaoTotal.push({ x: sx, y: sy, z: 5, diam: linDiam, cor: '#f5c2e7' });
-                trajetoSimulacaoTotal.push({ x: sx, y: sy, z: linZ, diam: linDiam, cor: '#f5c2e7' });
-                trajetoSimulacaoTotal.push({ x: ex, y: ey, z: linZ, diam: linDiam, cor: '#f5c2e7' });
-                trajetoSimulacaoTotal.push({ x: sx, y: sy, z: linZ, diam: linDiam, cor: '#f5c2e7' }); 
-                trajetoSimulacaoTotal.push({ x: sx, y: sy, z: 5, diam: linDiam, cor: '#f5c2e7' });
-            }
+            });
         }
     }
 
@@ -2543,7 +2639,6 @@
             gcode += `G43H${f.numT}G0Z100\n`;
             gcode += `S${f.rpm}M3\n`;
 
-            // NOVO CÁLCULO CENTRADO X0 Y0 ABSOLUTO (Sem G52)
             const startX = -(f.compX / 2) - (f.diam * 0.6);
             const endX = (f.compX / 2) + (f.diam * 0.6);
             let startY = -(f.largY / 2) - (f.diam * 0.6);
@@ -2634,13 +2729,12 @@
         gcode += `G43H${numT}G0Z150\n`;
         gcode += `S${rpm}M3\n`;
 
-        // NOVO CÁLCULO CENTRADO X0 Y0 ABSOLUTO (Sem G52)
         let quadRight = (compX / 2) + sobremetal + (diam / 2);
         let quadTop = (largY / 2) + sobremetal + (diam / 2);
         let quadLeft = -(compX / 2) - sobremetal - (diam / 2);
         let quadBottom = -(largY / 2) - sobremetal - (diam / 2);
 
-        let pInicialX = quadLeft - 10; // Afasta pra mergulho
+        let pInicialX = quadLeft - 10;
         let pInicialY = quadBottom;
 
         gcode += `G0X${pInicialX.toFixed(2)}Y${pInicialY.toFixed(2)}\n`;
@@ -3095,78 +3189,60 @@
         return gcode;
     }
 
-    // --- LÓGICA GERADORA DA NOVA ABA LINEAR/CIRCULAR ---
+    // --- NOVA LÓGICA GERADORA DA ABA LINEAR/CIRCULAR (LOOP DE ARRAY) ---
     function obterBlocoLinear(zeroPeca, oleo, useM01) {
-        const numT = parseInt(document.getElementById('lin_numT').value);
-        const diam = parseFloat(document.getElementById('lin_diam').value);
-        const rpm = parseInt(document.getElementById('lin_rpm').value);
-        const avanco = parseInt(document.getElementById('lin_avanco').value);
-        const zAprox = parseFloat(document.getElementById('lin_zAprox').value);
-        const zInicial = parseFloat(document.getElementById('lin_zInicial').value);
-        const zPasse = Math.abs(parseFloat(document.getElementById('lin_zPasse').value));
-        const zFinal = Math.abs(parseFloat(document.getElementById('lin_zFinal').value));
-        const tipo = document.getElementById('lin_tipo').value;
-
-        if (!validarZAproximacao(zAprox, zInicial, "FRESAGEM LINEAR/CIRCULAR")) return null;
+        if (listaLinearCirc.length === 0) {
+            alert("A lista de fresagem linear/circular está vazia! Adicione pelo menos uma operação na Aba 6.");
+            return null;
+        }
 
         let gcode = `(INICIO-DA-TAREFA-FRESAGEM-LINEAR-CIRCULAR)\n`;
-        gcode += `T${numT}M6\n`;
-        if (useM01) gcode += `M01\n`;
-        gcode += `G43H${numT}G0Z150\n`;
-        gcode += `S${rpm}M3\n`;
-        gcode += `${oleo}\n`;
 
-        let zAtual = zInicial;
+        listaLinearCirc.forEach((op, index) => {
+            gcode += `(OPERACAO-${index + 1}-${op.tipo})\n`;
+            gcode += `T${op.numT}M6\n`;
+            if (useM01) gcode += `M01\n`;
+            gcode += `G43H${op.numT}G0Z150\n`;
+            gcode += `S${op.rpm}M3\n`;
+            gcode += `${oleo}\n`;
 
-        if (tipo === 'CIRCULAR') {
-            const cX = parseFloat(document.getElementById('lin_circCentroX').value);
-            const cY = parseFloat(document.getElementById('lin_circCentroY').value);
-            const circDiamDesejado = parseFloat(document.getElementById('lin_circDiam').value);
-            const sentido = document.getElementById('lin_circSentido').value;
-            
-            // Compensa o raio da fresa assumindo o corte acompanhando a parede do diâmetro escolhido.
-            const raioReal = (circDiamDesejado / 2) - (diam / 2); 
-            
-            let startX = cX + raioReal;
-            let startY = cY;
+            let zAtual = op.zInicial;
 
-            while (zAtual < zFinal) {
-                let zProximo = zAtual + zPasse;
-                if (zProximo > zFinal) zProximo = zFinal;
+            if (op.tipo === 'CIRCULAR') {
+                const raioReal = (op.circDiamDesejado / 2) - (op.diam / 2); 
+                let startX = op.cX + raioReal;
+                let startY = op.cY;
 
-                gcode += `G0X${startX.toFixed(3)}Y${startY.toFixed(3)}\n`;
-                gcode += `G0Z${zAprox.toFixed(1)}\n`;
-                gcode += `G1Z-${zProximo.toFixed(3)}F${(avanco / 2).toFixed(0)}\n`;
-                gcode += `${sentido}X${startX.toFixed(3)}Y${startY.toFixed(3)}I-${raioReal.toFixed(3)}J0F${avanco}\n`;
-                gcode += `G0Z${zAprox.toFixed(1)}\n`;
-                
-                zAtual = zProximo;
+                while (zAtual < op.zFinal) {
+                    let zProximo = zAtual + op.zPasse;
+                    if (zProximo > op.zFinal) zProximo = op.zFinal;
+
+                    gcode += `G0X${startX.toFixed(3)}Y${startY.toFixed(3)}\n`;
+                    gcode += `G0Z${op.zAprox.toFixed(1)}\n`;
+                    gcode += `G1Z-${zProximo.toFixed(3)}F${(op.avanco / 2).toFixed(0)}\n`;
+                    gcode += `${op.sentido}X${startX.toFixed(3)}Y${startY.toFixed(3)}I-${raioReal.toFixed(3)}J0F${op.avanco}\n`;
+                    gcode += `G0Z${op.zAprox.toFixed(1)}\n`;
+                    
+                    zAtual = zProximo;
+                }
+            } else {
+                while (zAtual < op.zFinal) {
+                    let zProximo = zAtual + op.zPasse;
+                    if (zProximo > op.zFinal) zProximo = op.zFinal;
+
+                    gcode += `G0X${op.sx.toFixed(3)}Y${op.sy.toFixed(3)}\n`;
+                    gcode += `G0Z${op.zAprox.toFixed(1)}\n`;
+                    gcode += `G1Z-${zProximo.toFixed(3)}F${(op.avanco / 2).toFixed(0)}\n`;
+                    gcode += `G1X${op.ex.toFixed(3)}Y${op.ey.toFixed(3)}F${op.avanco}\n`;
+                    gcode += `G0Z${op.zAprox.toFixed(1)}\n`;
+                    
+                    zAtual = zProximo;
+                }
             }
-        } else {
-            let sx = parseFloat(document.getElementById('lin_startX').value);
-            let sy = parseFloat(document.getElementById('lin_startY').value);
-            let ex = parseFloat(document.getElementById('lin_endX').value);
-            let ey = parseFloat(document.getElementById('lin_endY').value);
-
-            if (tipo === 'RETAX') ey = sy;
-            if (tipo === 'RETAY') ex = sx;
-
-            while (zAtual < zFinal) {
-                let zProximo = zAtual + zPasse;
-                if (zProximo > zFinal) zProximo = zFinal;
-
-                gcode += `G0X${sx.toFixed(3)}Y${sy.toFixed(3)}\n`;
-                gcode += `G0Z${zAprox.toFixed(1)}\n`;
-                gcode += `G1Z-${zProximo.toFixed(3)}F${(avanco / 2).toFixed(0)}\n`;
-                gcode += `G1X${ex.toFixed(3)}Y${ey.toFixed(3)}F${avanco}\n`;
-                gcode += `G0Z${zAprox.toFixed(1)}\n`;
-                
-                zAtual = zProximo;
-            }
-        }
-        
-        gcode += `G0Z150\n`;
-        gcode += `M05M9\n\n`;
+            
+            gcode += `G0Z150\n`;
+            gcode += `M05M9\n\n`;
+        });
         
         return gcode;
     }
@@ -3467,17 +3543,16 @@
             operacoesResumo.push(`- Cavidades Retas [${centros.length} cavidade(s)] (${execAlivio ? listaBrocasAlivio.length + ' Broca(s) Alívio' : 'Sem Alívio'}${execContorno ? ' + Contorno Raio' : ''}): Profundidade Z = -${zFinal.toFixed(1)} mm | Tempo ~ ${tempoMin.toFixed(2)} min`);
         }
         
-        if (incLin) {
-            const t = parseInt(document.getElementById('lin_numT').value);
-            const diam = parseFloat(document.getElementById('lin_diam').value);
-            const zFinal = Math.abs(parseFloat(document.getElementById('lin_zFinal').value));
-            const tipo = document.getElementById('lin_tipo').value;
-            ferramentasUsadas.push({ t, diam, tipo: 'Fresa Linear/Circular' });
-            
-            let tempoMin = (zFinal * 0.5) + 0.5;
-            tempoTotalMinutos += tempoMin;
-            
-            operacoesResumo.push(`- Fresagem Linear/Circular (${tipo}): Profundidade Z = -${zFinal.toFixed(1)} mm | Tempo ~ ${tempoMin.toFixed(2)} min`);
+        // NOVO CÁLCULO DE TEMPO E FERRAMENTAS PARA ABA 6 (ADAPTADO)
+        if (incLin && listaLinearCirc.length > 0) {
+            let tempoLinTotal = 0;
+            listaLinearCirc.forEach((op, idx) => {
+                ferramentasUsadas.push({ t: op.numT, diam: op.diam, tipo: `Fresa Lin/Circ (${op.tipo})` });
+                let tempoMin = (op.zFinal * 0.5) + 0.5; // Aproximação do tempo anterior
+                tempoLinTotal += tempoMin;
+                operacoesResumo.push(`- Fresagem Linear/Circ ${idx + 1} (${op.tipo}): Profundidade Z = -${op.zFinal.toFixed(1)} mm | Tempo ~ ${tempoMin.toFixed(2)} min`);
+            });
+            tempoTotalMinutos += tempoLinTotal;
         }
 
         let ferramentasUnicas = [];
@@ -3518,6 +3593,7 @@
 
     window.onload = function() {
         renderizarTabelaFaceamentos();
+        renderizarTabelaLinearCirc(); // INICIALIZA A NOVA TABELA
         alternarAcabamentoMatriz();
         alternarAcabamentoContorno();
         alternarCamposPadrao();
