@@ -260,68 +260,118 @@
 
         /* --- SIMULADOR 3D/2D E PAINEL DE ANIMAÇÃO --- */
         .sim-wrapper {
-            background-color: #11111b;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 10px;
+            background: linear-gradient(145deg, #12131e, #0d0e17);
+            border: 1px solid #3b3d54;
+            border-radius: 10px;
+            padding: 12px;
             margin-bottom: 15px;
             display: flex;
             flex-direction: column;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.6), 0 8px 20px rgba(0,0,0,0.4);
+            position: relative;
         }
 
         .sim-header-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
 
         .sim-title {
             margin: 0;
-            font-size: 0.95rem;
+            font-size: 1rem;
             color: var(--accent);
-            font-weight: bold;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-shadow: 0 0 10px rgba(0, 173, 181, 0.4);
         }
 
         .sim-mode-toggle {
             display: flex;
             gap: 4px;
+            background-color: #0d0e17;
+            padding: 3px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
         }
 
         .sim-toggle-btn {
-            background-color: #181825;
-            border: 1px solid var(--border-color);
-            color: #ccc;
-            padding: 4px 10px;
+            background-color: transparent;
+            border: none;
+            color: #888a9e;
+            padding: 5px 12px;
             font-size: 0.75rem;
             border-radius: 4px;
             cursor: pointer;
             font-weight: bold;
+            transition: all 0.2s ease;
         }
 
         .sim-toggle-btn.active {
             background-color: var(--accent);
             color: #fff;
-            border-color: var(--accent);
+            box-shadow: 0 0 8px rgba(0, 173, 181, 0.5);
+        }
+
+        .sim-canvas-container {
+            position: relative;
+            width: 100%;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #28283d;
+            background-color: #08080d;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
         }
 
         canvas.sim-canvas {
-            background-color: #0b0b12;
-            border: 1px solid #28283d;
-            border-radius: 4px;
+            display: block;
             width: 100%;
-            height: 280px;
-            box-sizing: border-box;
+            height: 320px;
+            cursor: grab;
+        }
+
+        canvas.sim-canvas:active {
+            cursor: grabbing;
+        }
+
+        .sim-hud-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.72rem;
+            background: rgba(12, 13, 20, 0.85);
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.08);
+            backdrop-filter: blur(4px);
+        }
+
+        .sim-hud-item {
+            color: #a6e3a1;
+            text-shadow: 0 0 4px rgba(166, 227, 161, 0.3);
+        }
+
+        .sim-hud-item span {
+            color: #888a9e;
         }
 
         .sim-controls-bar {
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-top: 8px;
+            gap: 10px;
+            margin-top: 10px;
             background-color: #181825;
-            padding: 6px 10px;
-            border-radius: 4px;
+            padding: 8px 12px;
+            border-radius: 6px;
             border: 1px solid var(--border-color);
         }
 
@@ -329,53 +379,66 @@
             background-color: #313244;
             color: #fff;
             border: 1px solid var(--border-color);
-            padding: 5px 10px;
+            padding: 6px 14px;
             border-radius: 4px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 0.8rem;
+            font-size: 0.82rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
         }
 
         .btn-sim-control:hover {
             background-color: #45475a;
+            border-color: var(--accent);
         }
 
         .sim-progress-slider {
             flex: 1;
             cursor: pointer;
+            accent-color: var(--accent);
+            height: 6px;
+            border-radius: 3px;
         }
 
         .sim-speed-select {
             background-color: #11111b;
             color: #fff;
             border: 1px solid var(--border-color);
-            font-size: 0.75rem;
-            padding: 3px 6px;
+            font-size: 0.78rem;
+            padding: 4px 8px;
             border-radius: 4px;
+            cursor: pointer;
         }
 
         .sim-legenda {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 12px;
             margin-top: 8px;
             background-color: #181825;
-            padding: 6px 10px;
-            border-radius: 4px;
+            padding: 8px 12px;
+            border-radius: 6px;
             border: 1px solid var(--border-color);
             font-size: 0.72rem;
+            justify-content: space-between;
         }
 
         .legenda-item {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
+            color: #b0b0c0;
         }
 
         .legenda-box {
-            width: 100px;
-            height: 10px;
+            width: 14px;
+            height: 8px;
             border-radius: 2px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
         }
 
         textarea.gcode-area {
@@ -425,7 +488,7 @@
             opacity: 0.6;
         }
 
-        /* --- ESTILOS DA CALCULADORA MODAL FLUTUANTE --- */
+        /* --- MODAL CALCULADORA --- */
         .calc-modal {
             display: none;
             position: fixed;
@@ -538,6 +601,40 @@
         .calc-btn.clear {
             background-color: var(--danger);
             color: #fff;
+        }
+
+        /* --- MODAL CÓDIGO AMPLIADO --- */
+        .code-modal {
+            display: none;
+            position: fixed;
+            z-index: 1100;
+            top: 5%;
+            left: 5%;
+            width: 90%;
+            height: 88vh;
+            background-color: #1e1e2e;
+            border: 2px solid var(--accent);
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+            overflow: hidden;
+            flex-direction: column;
+        }
+
+        .code-modal-header {
+            background-color: #2b2b3b;
+            color: var(--accent);
+            padding: 10px 15px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .code-modal-body {
+            padding: 15px;
+            flex: 1;
+            display: flex;
         }
 
         @media (max-width: 950px) {
@@ -707,9 +804,7 @@
                         <th>Ação</th>
                     </tr>
                 </thead>
-                <tbody id="corpoTabelaFaceamentos">
-                    <!-- Preenchido via JavaScript -->
-                </tbody>
+                <tbody id="corpoTabelaFaceamentos"></tbody>
             </table>
 
             <button class="btn-secondary" style="background-color: var(--danger); margin-top: 6px;" onclick="limparTodosFaceamentos()">Limpar Lista de Faceamentos</button>
@@ -962,7 +1057,6 @@
                 </select>
             </div>
 
-            <!-- OPÇÃO 1: UNICO -->
             <div id="bloco_padrao_unico">
                 <div class="row-inputs">
                     <div class="form-group">
@@ -977,7 +1071,6 @@
                 <button class="btn-secondary" onclick="adicionarFuroManual()">+ Adicionar Furo Único</button>
             </div>
 
-            <!-- OPÇÕES 2 E 3: MALHAS QUADRADA E TRIANGULAR -->
             <div id="bloco_padrao_malha" style="display:none;">
                 <div class="row-inputs">
                     <div class="form-group">
@@ -1002,7 +1095,6 @@
                 <button class="btn-secondary" onclick="gerarMalhaFuros()">+ Gerar Malha de Furos</button>
             </div>
 
-            <!-- OPÇÃO 4: FLANGE CIRCULAR -->
             <div id="bloco_padrao_flange" style="display:none;">
                 <div class="row-inputs">
                     <div class="form-group">
@@ -1021,7 +1113,6 @@
                 <button class="btn-secondary" onclick="gerarPadraoFlange()">+ Adicionar Flange Circular</button>
             </div>
 
-            <!-- OPÇÃO 5: PERSONALIZADA (PROJETO TEXTO) -->
             <div id="bloco_padrao_personalizada" style="display:none;">
                 <div class="form-group">
                     <label for="txt_coords_projeto">Digite as coordenadas (X, Y por linha):</label>
@@ -1042,9 +1133,7 @@
                         <th>Ação</th>
                     </tr>
                 </thead>
-                <tbody id="corpoTabelaFuros">
-                    <!-- Preenchido via JavaScript -->
-                </tbody>
+                <tbody id="corpoTabelaFuros"></tbody>
             </table>
             
             <div class="row-inputs" style="margin-top: 8px;">
@@ -1086,9 +1175,7 @@
                 </div>
             </div>
 
-            <!-- GEOMETRIA DA CAVIDADE -->
             <h2>Geometria da Cavidade</h2>
-            
             <div id="bloco_cavidade_retangular">
                 <div class="row-inputs">
                     <div class="form-group">
@@ -1109,7 +1196,6 @@
                 </div>
             </div>
 
-            <!-- PAINEL POSICIONAMENTO ÚNICO -->
             <div id="bloco_cavidade_unica">
                 <div class="row-inputs">
                     <div class="form-group">
@@ -1123,7 +1209,6 @@
                 </div>
             </div>
 
-            <!-- PAINEL POSICIONAMENTO EM MALHA -->
             <div id="bloco_cavidade_malha" style="display:none; background-color: #1f1f2e; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); margin-bottom: 12px;">
                 <div class="row-inputs">
                     <div class="form-group">
@@ -1204,9 +1289,7 @@
                             <th>Ação</th>
                         </tr>
                     </thead>
-                    <tbody id="corpoTabelaBrocasAlivio">
-                        <!-- Preenchido via JavaScript -->
-                    </tbody>
+                    <tbody id="corpoTabelaBrocasAlivio"></tbody>
                 </table>
                 <button class="btn-secondary" style="background-color: var(--danger); margin-top: 6px;" onclick="limparBrocasAlivio()">Limpar Lista de Brocas</button>
             </div>
@@ -1296,7 +1379,6 @@
             
             <button class="btn-secondary" onclick="adicionarCavidade()">+ Adicionar Cavidade à Tabela</button>
 
-            <!-- NOVO: TABELA DE CAVIDADES CADASTRADAS -->
             <h2>Cavidades c/ Alívio Cadastradas</h2>
             <table class="table-furos">
                 <thead>
@@ -1309,13 +1391,10 @@
                         <th>Ação</th>
                     </tr>
                 </thead>
-                <tbody id="corpoTabelaCavidades">
-                    <!-- Preenchido via JavaScript -->
-                </tbody>
+                <tbody id="corpoTabelaCavidades"></tbody>
             </table>
 
             <button class="btn-secondary" style="background-color: var(--danger); margin-top: 6px;" onclick="limparCavidades()">Limpar Lista de Cavidades</button>
-
             <button id="btnGerarCavidade" class="btn-generate" onclick="gerarCavidadeGCode()">Gerar Apenas Cavidade(s)</button>
         </div>
 
@@ -1334,7 +1413,6 @@
                 </select>
             </div>
 
-            <!-- OPÇÕES PARA LINHAS -->
             <div id="bloco_linear_retas">
                 <div class="row-inputs">
                     <div class="form-group">
@@ -1358,7 +1436,6 @@
                 </div>
             </div>
 
-            <!-- OPÇÕES PARA CIRCULAR -->
             <div id="bloco_linear_circular" style="display: none;">
                 <div class="row-inputs">
                     <div class="form-group">
@@ -1442,9 +1519,7 @@
                         <th>Ação</th>
                     </tr>
                 </thead>
-                <tbody id="corpoTabelaLinear">
-                    <!-- Preenchido via JavaScript -->
-                </tbody>
+                <tbody id="corpoTabelaLinear"></tbody>
             </table>
 
             <button class="btn-secondary" style="background-color: var(--danger); margin-top: 6px;" onclick="limparLinearCirc()">Limpar Lista Linear/Circ.</button>
@@ -1456,16 +1531,27 @@
     <!-- PAINEL DE SIMULAÇÃO E CÓDIGO CNC -->
     <div class="panel output-container">
         
-        <!-- COMPONENTE: SIMULADOR 3D & 2D COM ANIMAÇÃO PLAY / PAUSE -->
+        <!-- SIMULADOR 3D & 2D COM ANIMAÇÃO -->
         <div class="sim-wrapper">
             <div class="sim-header-bar">
-                <h3 class="sim-title">3D & 2D CNC Machining Simulator</h3>
+                <h3 class="sim-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                    3D & 2D CNC Machining Simulator
+                </h3>
                 <div class="sim-mode-toggle">
                     <button id="btnSim2D" class="sim-toggle-btn active" onclick="definirModoSimulador('2D')">Visão 2D (Plano XY)</button>
                     <button id="btnSim3D" class="sim-toggle-btn" onclick="definirModoSimulador('3D')">Visão 3D (Bruto)</button>
                 </div>
             </div>
-            <canvas id="mainSimCanvas" class="sim-canvas" width="700" height="280"></canvas>
+            
+            <div class="sim-canvas-container">
+                <canvas id="mainSimCanvas" class="sim-canvas" width="700" height="320"></canvas>
+                <div class="sim-hud-overlay">
+                    <div class="sim-hud-item"><span>FERRAMENTA:</span> <strong id="hudTool">T1 (Ø70.0)</strong></div>
+                    <div class="sim-hud-item"><span>POSIÇÃO:</span> <strong id="hudPos">X: 0.00 | Y: 0.00 | Z: 100.00</strong></div>
+                    <div class="sim-hud-item"><span>MOVIMENTO:</span> <strong id="hudMove" style="color: #00adb5;">G0 (RÁPIDO)</strong></div>
+                </div>
+            </div>
             
             <div class="sim-controls-bar">
                 <button id="btnPlaySim" class="btn-sim-control" onclick="alternarAnimacaoSimulador()">▶ Play</button>
@@ -1473,6 +1559,8 @@
                 <input type="range" id="simProgressSlider" class="sim-progress-slider" min="0" max="100" value="0" oninput="aoMudarProgressoSlider(this.value)">
                 <span id="simProgressTxt" style="font-size:0.75rem; color:#aaa; font-family:monospace; min-width:45px;">0%</span>
                 <select id="simSpeedSelect" class="sim-speed-select" onchange="alterarVelocidadeSimulador(this.value)">
+                    <option value="0.2">0.2x</option>
+                    <option value="0.5">0.5x</option>
                     <option value="1">1x</option>
                     <option value="2" selected>2x</option>
                     <option value="5">5x</option>
@@ -1482,20 +1570,18 @@
 
             <div class="sim-legenda">
                 <div class="legenda-item"><div class="legenda-box" style="border: 1px dashed #ff9900;"></div><span>Bruto</span></div>
-                <div class="legenda-item"><div class="legenda-box" style="background-color: #00adb5;"></div><span>Faceamento</span></div>
-                <div class="legenda-item"><div class="legenda-box" style="background-color: #a6e3a1;"></div><span>Contorno</span></div>
-                <div class="legenda-item"><div class="legenda-box" style="background-color: #cba6f7;"></div><span>Matriz Ilhas</span></div>
-                <div class="legenda-item"><div class="legenda-box" style="background-color: #89dceb;"></div><span>Cavidade</span></div>
-                <div class="legenda-item"><div class="legenda-box" style="background-color: #f9e2af;"></div><span>Alívio</span></div>
-                <div class="legenda-item"><div class="legenda-box" style="background-color: #f38ba8;"></div><span>Furações</span></div>
-                <div class="legenda-item"><div class="legenda-box" style="background-color: #f5c2e7;"></div><span>Lin/Circ</span></div>
+                <div class="legenda-item"><div class="legenda-box" style="background-color: #ff5555;"></div><span>G0 (Rápido)</span></div>
+                <div class="legenda-item"><div class="legenda-box" style="background-color: #00adb5;"></div><span>G1 (Linear)</span></div>
+                <div class="legenda-item"><div class="legenda-box" style="background-color: #a6e3a1;"></div><span>G2/G3 (Arco)</span></div>
+                <div class="legenda-item"><div class="legenda-box" style="background-color: #f9e2af;"></div><span>G83 (Ciclo Pica-Pau)</span></div>
             </div>
         </div>
 
         <h2>Código CNC Gerado (Padrão CNC Real)</h2>
-        <textarea id="codigoGcode" class="gcode-area" readonly placeholder="Selecione as operações desejadas e clique em 'Gerar Programa Único Combinado'..."></textarea>
+        <textarea id="codigoGcode" class="gcode-area" placeholder="Selecione as operações desejadas e clique em 'Gerar Programa Único Combinado'..." oninput="sincronizarCodigoNormal(this.value)"></textarea>
         
         <div class="actions-bar">
+            <button id="btnExpandir" class="btn-action" onclick="alternarModalCodigo()">🔍 Expandir Código</button>
             <button id="btnCalc" class="btn-action" onclick="alternarCalculadora()">🧮 Calculadora</button>
             <button id="btnBaixarTxt" class="btn-action" disabled onclick="baixarRelatorioTXT()">📄 Baixar Relatório (TXT)</button>
             <button id="btnCopiar" class="btn-action" disabled onclick="copiarCodigo()">📋 Copiar Código</button>
@@ -1549,6 +1635,20 @@
     </div>
 </div>
 
+<!-- MODAL VISUALIZAÇÃO AMPLIADA DO CÓDIGO -->
+<div id="codeModal" class="code-modal">
+    <div class="code-modal-header">
+        <span>🔍 Código G-Code Ampliado</span>
+        <div style="display: flex; gap: 8px;">
+            <button class="btn-action" style="padding: 4px 10px; font-size: 0.8rem;" onclick="copiarCodigo()">📋 Copiar</button>
+            <button class="btn-close-calc" onclick="alternarModalCodigo()">×</button>
+        </div>
+    </div>
+    <div class="code-modal-body">
+        <textarea id="gcodeAmpliado" class="gcode-area" style="height: 100%; font-size: 0.95rem; line-height: 1.5;" oninput="sincronizarCodigoAmpliado(this.value)"></textarea>
+    </div>
+</div>
+
 <script>
     let modoSimuladorAtual = '2D';
     let codigoFoiCopiado = false;
@@ -1559,6 +1659,16 @@
     let idAnimacaoSim = null;
     let velocidadeSimulador = 2;
     let trajetoSimulacaoTotal = [];
+
+    // NAVEGAÇÃO 3D/2D
+    let simCamZoom = 1.0;
+    let simCamPanX = 0;
+    let simCamPanY = 0;
+    let simCamRotX = 1.0;
+    let simCamRotZ = 0.785;
+    let isDraggingSim = false;
+    let lastMouseX = 0;
+    let lastMouseY = 0;
 
     // LISTAS DINÂMICAS
     let listaFaceamentos = [
@@ -1580,7 +1690,38 @@
     let listaCavidadesCadastradas = [];
     let listaLinearCirc = [];
 
-    // --- LÓGICA DO GERENCIADOR DE MÚLTIPLOS FACEAMENTOS ---
+    // --- CONTROLE DAS MODAIS E SINCRONIZAÇÃO DE CÓDIGO ---
+    function alternarModalCodigo() {
+        const modal = document.getElementById('codeModal');
+        const txtPrincipal = document.getElementById('codigoGcode');
+        const txtAmpliado = document.getElementById('gcodeAmpliado');
+
+        if (modal.style.display === 'flex') {
+            modal.style.display = 'none';
+        } else {
+            txtAmpliado.value = txtPrincipal.value;
+            modal.style.display = 'flex';
+        }
+    }
+
+    function sincronizarCodigoAmpliado(valor) {
+        document.getElementById('codigoGcode').value = valor;
+        atualizarSimulador();
+    }
+
+    function sincronizarCodigoNormal(valor) {
+        document.getElementById('gcodeAmpliado').value = valor;
+        atualizarSimulador();
+    }
+
+    function liberarBotoesAcao() {
+        document.getElementById('btnCopiar').disabled = false;
+        document.getElementById('btnBaixarTxt').disabled = false;
+        document.getElementById('gcodeAmpliado').value = document.getElementById('codigoGcode').value;
+        codigoFoiCopiado = false;
+    }
+
+    // --- FACEAMENTOS ---
     function renderizarTabelaFaceamentos() {
         const tbody = document.getElementById('corpoTabelaFaceamentos');
         tbody.innerHTML = '';
@@ -1633,7 +1774,7 @@
         atualizarSimulador();
     }
 
-    // --- NOVA LÓGICA DO GERENCIADOR LINEAR / CIRCULAR (ABA 6) ---
+    // --- GERENCIADOR LINEAR / CIRCULAR ---
     function renderizarTabelaLinearCirc() {
         const tbody = document.getElementById('corpoTabelaLinear');
         tbody.innerHTML = '';
@@ -1644,16 +1785,8 @@
         }
 
         listaLinearCirc.forEach((op, index) => {
-            let txtInicio = '';
-            let txtFim = '';
-
-            if (op.tipo === 'CIRCULAR') {
-                txtInicio = `X${op.cX}, Y${op.cY}`;
-                txtFim = `Ø${op.circDiamDesejado} (${op.sentido})`;
-            } else {
-                txtInicio = `X${op.sx}, Y${op.sy}`;
-                txtFim = `X${op.ex}, Y${op.ey}`;
-            }
+            let txtInicio = op.tipo === 'CIRCULAR' ? `X${op.cX}, Y${op.cY}` : `X${op.sx}, Y${op.sy}`;
+            let txtFim = op.tipo === 'CIRCULAR' ? `Ø${op.circDiamDesejado} (${op.sentido})` : `X${op.ex}, Y${op.ey}`;
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -1716,7 +1849,7 @@
         atualizarSimulador();
     }
 
-    // --- NOVA LÓGICA DO GERENCIADOR DE CAVIDADES (ABA 5) ---
+    // --- GERENCIADOR DE CAVIDADES ---
     function alternarFormatoCavidade() {
         const formato = document.getElementById('cav_formato').value;
         if (formato === 'CIRCULAR') {
@@ -1816,22 +1949,20 @@
         atualizarSimulador();
     }
 
-    // --- LÓGICA DO SIMULADOR INTEGRADO 2D / 3D E CAMINHO DA FERRAMENTA ---
+    // --- SIMULADOR INTEGRADO 2D / 3D E ANIMAÇÃO ---
     function definirModoSimulador(modo) {
         modoSimuladorAtual = modo;
         document.getElementById('btnSim2D').classList.toggle('active', modo === '2D');
         document.getElementById('btnSim3D').classList.toggle('active', modo === '3D');
+        simCamZoom = 1.0;
+        simCamPanX = 0;
+        simCamPanY = 0;
         atualizarSimulador();
     }
 
     function alternarAcabamentoContorno() {
         const opcao = document.getElementById('c_execAcab').value;
-        const bloco = document.getElementById('blocoAcabamentoContorno');
-        if (opcao === 'NAO') {
-            bloco.style.display = 'none';
-        } else {
-            bloco.style.display = 'block';
-        }
+        document.getElementById('blocoAcabamentoContorno').style.display = (opcao === 'NAO') ? 'none' : 'block';
     }
 
     function alternarTipoLinear() {
@@ -1881,7 +2012,7 @@
     function loopAnimacaoSimulador() {
         if (!animandoSimulador) return;
 
-        tempoAnimacaoSim += 0.002 * velocidadeSimulador;
+        tempoAnimacaoSim += 0.0015 * velocidadeSimulador;
         if (tempoAnimacaoSim > 1.0) {
             tempoAnimacaoSim = 1.0;
             animandoSimulador = false;
@@ -1901,163 +2032,111 @@
 
     function construirTrajetoSimulacao() {
         trajetoSimulacaoTotal = [];
+        const gcodeText = document.getElementById('codigoGcode').value;
+        if (!gcodeText.trim()) return;
 
-        const brutoX = parseFloat(document.getElementById('multi_brutoX').value) || 250;
-        const brutoY = parseFloat(document.getElementById('multi_brutoY').value) || 250;
+        let currX = 0, currY = 0, currZ = 100;
+        let currTool = 1;
+        let toolDiams = {};
 
-        // 1. MÚLTIPLOS FACEAMENTOS
-        if (document.getElementById('chk_faceamento').checked && listaFaceamentos.length > 0) {
-            listaFaceamentos.forEach(f => {
-                const passoY = f.diam * 0.6;
-                let yAtual = -(f.largY / 2) - (f.diam * 0.6);
-                const limitY = (f.largY / 2) + (f.diam * 0.6);
-                let dir = true;
+        toolDiams[1] = parseFloat(document.getElementById('f_diam').value) || 70;
+        toolDiams[2] = parseFloat(document.getElementById('lin_diam').value) || 10;
+        toolDiams[3] = parseFloat(document.getElementById('alivio_diam').value) || 6;
+        toolDiams[4] = 8;
+        toolDiams[5] = parseFloat(document.getElementById('furo_diam').value) || 8;
+        toolDiams[6] = parseFloat(document.getElementById('cav_acabDiam').value) || 6;
+        toolDiams[8] = 10.5;
+        toolDiams[10] = parseFloat(document.getElementById('cav_fresaDiam').value) || 16;
+        toolDiams[12] = parseFloat(document.getElementById('m_diam').value) || 12;
+        toolDiams[16] = parseFloat(document.getElementById('c_diamAcab').value) || 20;
+        toolDiams[18] = parseFloat(document.getElementById('c_diamDesb').value) || 32;
 
-                while (yAtual <= limitY) {
-                    let xStart = dir ? -(f.compX / 2) - (f.diam * 0.6) : (f.compX / 2) + (f.diam * 0.6);
-                    let xEnd = dir ? (f.compX / 2) + (f.diam * 0.6) : -(f.compX / 2) - (f.diam * 0.6);
+        let lines = gcodeText.split('\n');
+        let currentMotion = 'G0';
+        let absMode = true;
 
-                    trajetoSimulacaoTotal.push({ x: xStart, y: yAtual, z: f.zFinal, diam: f.diam, cor: '#00adb5' });
-                    trajetoSimulacaoTotal.push({ x: xEnd, y: yAtual, z: f.zFinal, diam: f.diam, cor: '#00adb5' });
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i].trim().toUpperCase();
+            if (line.startsWith('(') || line.startsWith('%') || line === '') continue;
 
-                    yAtual += passoY;
-                    dir = !dir;
+            let matchT = line.match(/T(\d+)/);
+            if (matchT) currTool = parseInt(matchT[1]);
+
+            if (line.includes('G90')) absMode = true;
+            if (line.includes('G91')) absMode = false;
+
+            if (line.includes('G00') || line.includes('G0') && !line.includes('G02') && !line.includes('G03')) currentMotion = 'G0';
+            else if (line.includes('G01') || line.includes('G1')) currentMotion = 'G1';
+            else if (line.includes('G02') || line.includes('G2')) currentMotion = 'G2';
+            else if (line.includes('G03') || line.includes('G3')) currentMotion = 'G3';
+            else if (line.includes('G83')) currentMotion = 'G83';
+            else if (line.includes('G80')) currentMotion = 'G0';
+
+            let matchX = line.match(/X([-+]?\d*\.?\d+)/);
+            let matchY = line.match(/Y([-+]?\d*\.?\d+)/);
+            let matchZ = line.match(/Z([-+]?\d*\.?\d+)/);
+            let matchI = line.match(/I([-+]?\d*\.?\d+)/);
+            let matchJ = line.match(/J([-+]?\d*\.?\d+)/);
+            let matchQ = line.match(/Q([-+]?\d*\.?\d+)/);
+            let matchR = line.match(/R([-+]?\d*\.?\d+)/);
+
+            let newX = currX, newY = currY, newZ = currZ;
+
+            if (matchX) newX = absMode ? parseFloat(matchX[1]) : currX + parseFloat(matchX[1]);
+            if (matchY) newY = absMode ? parseFloat(matchY[1]) : currY + parseFloat(matchY[1]);
+            if (matchZ) newZ = absMode ? parseFloat(matchZ[1]) : currZ + parseFloat(matchZ[1]);
+
+            let diam = toolDiams[currTool] || 10;
+
+            if (currentMotion === 'G2' || currentMotion === 'G3') {
+                let I = matchI ? parseFloat(matchI[1]) : 0;
+                let J = matchJ ? parseFloat(matchJ[1]) : 0;
+                let cx = currX + I;
+                let cy = currY + J;
+                let r = Math.sqrt(I * I + J * J);
+
+                let startAng = Math.atan2(currY - cy, currX - cx);
+                let endAng = Math.atan2(newY - cy, newX - cx);
+
+                if (currentMotion === 'G2' && endAng >= startAng) endAng -= 2 * Math.PI;
+                if (currentMotion === 'G3' && endAng <= startAng) endAng += 2 * Math.PI;
+
+                let steps = 16;
+                for (let s = 1; s <= steps; s++) {
+                    let ang = startAng + (endAng - startAng) * (s / steps);
+                    let zStep = currZ + (newZ - currZ) * (s / steps);
+                    let arcX = cx + r * Math.cos(ang);
+                    let arcY = cy + r * Math.sin(ang);
+                    trajetoSimulacaoTotal.push({
+                        x: arcX, y: arcY, z: zStep,
+                        tipo: currentMotion, tool: currTool, diam: diam
+                    });
                 }
-            });
-        }
+            } else if (currentMotion === 'G83') {
+                let rPlane = matchR ? parseFloat(matchR[1]) : 5;
+                let qStep = matchQ ? parseFloat(matchQ[1]) : 3;
+                let finalZ = matchZ ? parseFloat(matchZ[1]) : newZ;
 
-        // 2. CONTORNO (Desbaste + Acabamento Opcional)
-        if (document.getElementById('chk_contorno').checked) {
-            const cDiam = parseFloat(document.getElementById('c_diamDesb').value) || 32;
-            const cZFinal = -Math.abs(parseFloat(document.getElementById('c_zFinal').value) || 12);
-            const sobremetal = parseFloat(document.getElementById('c_sobremetal').value) || 0.3;
+                let depth = Math.abs(finalZ - rPlane);
+                let passes = Math.ceil(depth / qStep);
 
-            let xMin = -brutoX / 2 - sobremetal; let xMax = brutoX / 2 + sobremetal;
-            let yMin = -brutoY / 2 - sobremetal; let yMax = brutoY / 2 + sobremetal;
+                for (let p = 1; p <= passes; p++) {
+                    let pZ = rPlane - (p * qStep);
+                    if (pZ < finalZ) pZ = finalZ;
 
-            // Desbaste
-            trajetoSimulacaoTotal.push({ x: xMin, y: yMin, z: cZFinal, diam: cDiam, cor: '#a6e3a1' });
-            trajetoSimulacaoTotal.push({ x: xMax, y: yMin, z: cZFinal, diam: cDiam, cor: '#a6e3a1' });
-            trajetoSimulacaoTotal.push({ x: xMax, y: yMax, z: cZFinal, diam: cDiam, cor: '#a6e3a1' });
-            trajetoSimulacaoTotal.push({ x: xMin, y: yMax, z: cZFinal, diam: cDiam, cor: '#a6e3a1' });
-            trajetoSimulacaoTotal.push({ x: xMin, y: yMin, z: cZFinal, diam: cDiam, cor: '#a6e3a1' });
-
-            // Acabamento
-            if (document.getElementById('c_execAcab').value === 'SIM') {
-                const cDiamAcab = parseFloat(document.getElementById('c_diamAcab').value) || 20;
-                let xMinA = -brutoX / 2; let xMaxA = brutoX / 2;
-                let yMinA = -brutoY / 2; let yMaxA = brutoY / 2;
-
-                trajetoSimulacaoTotal.push({ x: xMinA, y: yMinA, z: cZFinal, diam: cDiamAcab, cor: '#00adb5' });
-                trajetoSimulacaoTotal.push({ x: xMaxA, y: yMinA, z: cZFinal, diam: cDiamAcab, cor: '#00adb5' });
-                trajetoSimulacaoTotal.push({ x: xMaxA, y: yMaxA, z: cZFinal, diam: cDiamAcab, cor: '#00adb5' });
-                trajetoSimulacaoTotal.push({ x: xMinA, y: yMaxA, z: cZFinal, diam: cDiamAcab, cor: '#00adb5' });
-                trajetoSimulacaoTotal.push({ x: xMinA, y: yMinA, z: cZFinal, diam: cDiamAcab, cor: '#00adb5' });
+                    trajetoSimulacaoTotal.push({ x: newX, y: newY, z: pZ, tipo: 'G83', tool: currTool, diam: diam });
+                    trajetoSimulacaoTotal.push({ x: newX, y: newY, z: rPlane, tipo: 'G0', tool: currTool, diam: diam });
+                }
+            } else {
+                if (newX !== currX || newY !== currY || newZ !== currZ) {
+                    trajetoSimulacaoTotal.push({
+                        x: newX, y: newY, z: newZ,
+                        tipo: currentMotion, tool: currTool, diam: diam
+                    });
+                }
             }
-        }
 
-        // 3. MATRIZ DE ILHAS
-        if (document.getElementById('chk_matriz').checked) {
-            const cols = parseInt(document.getElementById('m_colunas').value) || 1;
-            const lins = parseInt(document.getElementById('m_linhas').value) || 1;
-            const tX = parseFloat(document.getElementById('m_tamX').value) || 40;
-            const tY = parseFloat(document.getElementById('m_tamY').value) || 40;
-            const canal = parseFloat(document.getElementById('m_canal').value) || 20;
-            const mDiam = parseFloat(document.getElementById('m_diam').value) || 12;
-            const mZFinal = -Math.abs(parseFloat(document.getElementById('m_zFinal').value) || 12);
-
-            const totX = (cols * tX) + ((cols - 1) * canal);
-            const totY = (lins * tY) + ((lins - 1) * canal);
-            const startX = -(totX / 2) + (tX / 2);
-            const startY = -(totY / 2) + (tY / 2);
-
-            for (let l = 0; l < lins; l++) {
-                for (let c = 0; c < cols; c++) {
-                    let posX = startX + (c * (tX + canal));
-                    let posY = startY + (l * (tY + canal));
-                    let minX = posX - tX / 2; let maxX = posX + tX / 2;
-                    let minY = posY - tY / 2; let maxY = posY + tY / 2;
-
-                    trajetoSimulacaoTotal.push({ x: minX, y: minY, z: mZFinal, diam: mDiam, cor: '#cba6f7' });
-                    trajetoSimulacaoTotal.push({ x: maxX, y: minY, z: mZFinal, diam: mDiam, cor: '#cba6f7' });
-                    trajetoSimulacaoTotal.push({ x: maxX, y: maxY, z: mZFinal, diam: mDiam, cor: '#cba6f7' });
-                    trajetoSimulacaoTotal.push({ x: minX, y: maxY, z: mZFinal, diam: mDiam, cor: '#cba6f7' });
-                    trajetoSimulacaoTotal.push({ x: minX, y: minY, z: mZFinal, diam: mDiam, cor: '#cba6f7' });
-                }
-            }
-        }
-
-        // 4. LISTA DE FUROS
-        if (document.getElementById('chk_lista_furos').checked) {
-            listaFurosCustom.forEach(f => {
-                trajetoSimulacaoTotal.push({ x: f.x, y: f.y, z: 5, diam: f.diam, cor: '#f38ba8' });
-                trajetoSimulacaoTotal.push({ x: f.x, y: f.y, z: -f.zFinal, diam: f.diam, cor: '#f38ba8' });
-                trajetoSimulacaoTotal.push({ x: f.x, y: f.y, z: 5, diam: f.diam, cor: '#f38ba8' });
-            });
-        }
-
-        // 5. CAVIDADE E ALÍVIO (ARRAY)
-        if (document.getElementById('chk_cavidade').checked && listaCavidadesCadastradas.length > 0) {
-            listaCavidadesCadastradas.forEach(cav => {
-                cav.centros.forEach(cnt => {
-                    if (cav.execAlivio && cav.brocas.length > 0) {
-                        let b = cav.brocas[0];
-                        trajetoSimulacaoTotal.push({ x: cnt.x + cav.alivioOffX, y: cnt.y + cav.alivioOffY, z: 5, diam: b.diam, cor: '#f9e2af' });
-                        trajetoSimulacaoTotal.push({ x: cnt.x + cav.alivioOffX, y: cnt.y + cav.alivioOffY, z: -cav.zFinalAbs, diam: b.diam, cor: '#f9e2af' });
-                        trajetoSimulacaoTotal.push({ x: cnt.x + cav.alivioOffX, y: cnt.y + cav.alivioOffY, z: 5, diam: b.diam, cor: '#f9e2af' });
-                    }
-
-                    if (cav.formato === 'CIRCULAR') {
-                        let rReal = (cav.diamCirc / 2) - (cav.fresaDiam / 2);
-                        if (rReal < 0) rReal = 0;
-                        for (let a = 0; a <= 360; a += 10) {
-                            let rad = a * Math.PI / 180;
-                            trajetoSimulacaoTotal.push({
-                                x: cnt.x + rReal * Math.cos(rad),
-                                y: cnt.y + rReal * Math.sin(rad),
-                                z: -cav.zFinalAbs, diam: cav.fresaDiam, cor: '#89dceb'
-                            });
-                        }
-                    } else {
-                        let minX = cnt.x - cav.dimX / 2 + cav.fresaDiam / 2;
-                        let maxX = cnt.x + cav.dimX / 2 - cav.fresaDiam / 2;
-                        let minY = cnt.y - cav.dimY / 2 + cav.fresaDiam / 2;
-                        let maxY = cnt.y + cav.dimY / 2 - cav.fresaDiam / 2;
-
-                        trajetoSimulacaoTotal.push({ x: minX, y: minY, z: -cav.zFinalAbs, diam: cav.fresaDiam, cor: '#89dceb' });
-                        trajetoSimulacaoTotal.push({ x: maxX, y: minY, z: -cav.zFinalAbs, diam: cav.fresaDiam, cor: '#89dceb' });
-                        trajetoSimulacaoTotal.push({ x: maxX, y: maxY, z: -cav.zFinalAbs, diam: cav.fresaDiam, cor: '#89dceb' });
-                        trajetoSimulacaoTotal.push({ x: minX, y: maxY, z: -cav.zFinalAbs, diam: cav.fresaDiam, cor: '#89dceb' });
-                        trajetoSimulacaoTotal.push({ x: minX, y: minY, z: -cav.zFinalAbs, diam: cav.fresaDiam, cor: '#89dceb' });
-                    }
-                });
-            });
-        }
-
-        // 6. LINEAR E CIRCULAR (ARRAY)
-        if (document.getElementById('chk_linear').checked && listaLinearCirc.length > 0) {
-            listaLinearCirc.forEach(op => {
-                const linDiam = op.diam;
-                const linZ = -op.zFinal;
-
-                if (op.tipo === 'CIRCULAR') {
-                    const rReal = (op.circDiamDesejado / 2) - (linDiam / 2); 
-                    for (let a = 0; a <= 360; a += 10) {
-                        let rad = a * Math.PI / 180;
-                        trajetoSimulacaoTotal.push({
-                            x: op.cX + rReal * Math.cos(rad),
-                            y: op.cY + rReal * Math.sin(rad),
-                            z: linZ, diam: linDiam, cor: '#f5c2e7'
-                        });
-                    }
-                } else {
-                    trajetoSimulacaoTotal.push({ x: op.sx, y: op.sy, z: 5, diam: linDiam, cor: '#f5c2e7' });
-                    trajetoSimulacaoTotal.push({ x: op.sx, y: op.sy, z: linZ, diam: linDiam, cor: '#f5c2e7' });
-                    trajetoSimulacaoTotal.push({ x: op.ex, y: op.ey, z: linZ, diam: linDiam, cor: '#f5c2e7' });
-                    trajetoSimulacaoTotal.push({ x: op.sx, y: op.sy, z: linZ, diam: linDiam, cor: '#f5c2e7' }); 
-                    trajetoSimulacaoTotal.push({ x: op.sx, y: op.sy, z: 5, diam: linDiam, cor: '#f5c2e7' });
-                }
-            });
+            currX = newX; currY = newY; currZ = newZ;
         }
     }
 
@@ -2078,8 +2157,9 @@
             x: p1.x + (p2.x - p1.x) * t,
             y: p1.y + (p2.y - p1.y) * t,
             z: p1.z + (p2.z - p1.z) * t,
+            tipo: p1.tipo,
+            tool: p1.tool,
             diam: p1.diam,
-            cor: p1.cor,
             indexLimite: idx1
         };
     }
@@ -2096,6 +2176,16 @@
         construirTrajetoSimulacao();
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+        let pInfo = obterPontoAtualAnimacao();
+        if (pInfo) {
+            document.getElementById('hudTool').innerText = `T${pInfo.tool} (Ø${pInfo.diam.toFixed(1)}mm)`;
+            document.getElementById('hudPos').innerText = `X: ${pInfo.x.toFixed(2)} | Y: ${pInfo.y.toFixed(2)} | Z: ${pInfo.z.toFixed(2)}`;
+            let txtTipo = pInfo.tipo === 'G0' ? 'G0 (RÁPIDO)' : (pInfo.tipo === 'G1' ? 'G1 (CORTE LINEAR)' : (pInfo.tipo === 'G83' ? 'G83 (PICA-PAU)' : 'G2/G3 (ARCO)'));
+            let corTipo = pInfo.tipo === 'G0' ? '#ff5555' : (pInfo.tipo === 'G1' ? '#00adb5' : '#a6e3a1');
+            document.getElementById('hudMove').innerText = txtTipo;
+            document.getElementById('hudMove').style.color = corTipo;
+        }
+
         if (modoSimuladorAtual === '2D') {
             desenharSimulador2D(ctx, canvas, brutoX, brutoY);
         } else {
@@ -2104,65 +2194,84 @@
     }
 
     function desenharSimulador2D(ctx, canvas, brutoX, brutoY) {
-        const margin = 35;
-        const scale = Math.min((canvas.width - margin * 2) / brutoX, (canvas.height - margin * 2) / brutoY);
-        const cX = canvas.width / 2;
-        const cY = canvas.height / 2;
+        const margin = 40;
+        const baseScale = Math.min((canvas.width - margin * 2) / brutoX, (canvas.height - margin * 2) / brutoY);
+        const scale = baseScale * simCamZoom;
+        const cX = (canvas.width / 2) + simCamPanX;
+        const cY = (canvas.height / 2) + simCamPanY;
 
         function toScreen(x, y) {
             return { x: cX + (x * scale), y: cY - (y * scale) };
         }
 
-        ctx.strokeStyle = '#1e1e2e';
+        ctx.strokeStyle = '#181926';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        for (let x = -250; x <= 250; x += 50) {
-            let p1 = toScreen(x, -250); let p2 = toScreen(x, 250);
+        for (let x = -500; x <= 500; x += 25) {
+            let p1 = toScreen(x, -500); let p2 = toScreen(x, 500);
             ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
         }
-        for (let y = -250; y <= 250; y += 50) {
-            let p1 = toScreen(-250, y); let p2 = toScreen(250, y);
+        for (let y = -500; y <= 500; y += 25) {
+            let p1 = toScreen(-500, y); let p2 = toScreen(500, y);
             ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
         }
         ctx.stroke();
 
         let oX = toScreen(0, 0);
         ctx.strokeStyle = '#3f3f5a';
-        ctx.beginPath(); ctx.arc(oX.x, oX.y, 4, 0, Math.PI * 2); ctx.stroke();
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(oX.x - 20, oX.y); ctx.lineTo(oX.x + 20, oX.y);
+        ctx.moveTo(oX.x, oX.y - 20); ctx.lineTo(oX.x, oX.y + 20);
+        ctx.stroke();
 
         let bMin = toScreen(-brutoX / 2, brutoY / 2);
         let bMax = toScreen(brutoX / 2, -brutoY / 2);
         ctx.strokeStyle = '#ff9900';
-        ctx.setLineDash([4, 4]);
+        ctx.shadowColor = 'rgba(255, 153, 0, 0.4)';
+        ctx.shadowBlur = 8;
+        ctx.setLineDash([5, 5]);
         ctx.strokeRect(bMin.x, bMin.y, Math.abs(bMax.x - bMin.x), Math.abs(bMax.y - bMin.y));
         ctx.setLineDash([]);
+        ctx.shadowBlur = 0;
 
         let pontoAtualInfo = obterPontoAtualAnimacao();
         let limiteIdx = pontoAtualInfo ? pontoAtualInfo.indexLimite : trajetoSimulacaoTotal.length;
 
         for (let i = 0; i < trajetoSimulacaoTotal.length - 1; i++) {
-            let p1 = toScreen(trajetoSimulacaoTotal[i].x, trajetoSimulacaoTotal[i].y);
-            let p2 = toScreen(trajetoSimulacaoTotal[i+1].x, trajetoSimulacaoTotal[i+1].y);
+            let pt1 = trajetoSimulacaoTotal[i];
+            let pt2 = trajetoSimulacaoTotal[i+1];
+            let p1 = toScreen(pt1.x, pt1.y);
+            let p2 = toScreen(pt2.x, pt2.y);
 
-            ctx.strokeStyle = (i <= limiteIdx) ? trajetoSimulacaoTotal[i].cor : '#2a2a3d';
-            ctx.lineWidth = (i <= limiteIdx) ? 2 : 1;
-
+            let executado = (i <= limiteIdx);
             ctx.beginPath();
             ctx.moveTo(p1.x, p1.y);
             ctx.lineTo(p2.x, p2.y);
+
+            if (pt2.tipo === 'G0') {
+                ctx.strokeStyle = executado ? '#ff5555' : 'rgba(255, 85, 85, 0.2)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([3, 3]);
+            } else {
+                ctx.strokeStyle = executado ? (pt2.tipo === 'G1' ? '#00adb5' : '#a6e3a1') : 'rgba(0, 173, 181, 0.15)';
+                ctx.lineWidth = executado ? 2 : 1;
+                ctx.setLineDash([]);
+            }
+
             ctx.stroke();
         }
+        ctx.setLineDash([]);
 
         if (pontoAtualInfo) {
             let posTela = toScreen(pontoAtualInfo.x, pontoAtualInfo.y);
             let raioFerramentaTela = (pontoAtualInfo.diam / 2) * scale;
 
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
-            ctx.strokeStyle = '#ffffff';
+            ctx.fillStyle = 'rgba(0, 173, 181, 0.2)';
+            ctx.strokeStyle = '#00adb5';
             ctx.lineWidth = 1.5;
-
             ctx.beginPath();
-            ctx.arc(posTela.x, posTela.y, raioFerramentaTela, 0, Math.PI * 2);
+            ctx.arc(posTela.x, posTela.y, Math.max(raioFerramentaTela, 3), 0, Math.PI * 2);
             ctx.fill();
             ctx.stroke();
 
@@ -2174,17 +2283,22 @@
     }
 
     function desenharSimulador3D(ctx, canvas, bx, by, bz) {
-        const cX = canvas.width / 2;
-        const cY = canvas.height / 2 + 30;
+        const cX = (canvas.width / 2) + simCamPanX;
+        const cY = (canvas.height / 2) + 30 + simCamPanY;
 
-        const isoScale = 0.65;
-        const cos = Math.cos(Math.PI / 6) * isoScale;
-        const sin = Math.sin(Math.PI / 6) * isoScale;
+        const baseScale = 0.55 * simCamZoom;
+        const cosZ = Math.cos(simCamRotZ) * baseScale;
+        const sinZ = Math.sin(simCamRotZ) * baseScale;
+        const cosX = Math.cos(simCamRotX);
+        const sinX = Math.sin(simCamRotX);
 
         function isoProject(x, y, z) {
+            let rx = x * cosZ - y * sinZ;
+            let ry = x * sinZ + y * cosZ;
+            
             return {
-                x: cX + (x - y) * cos,
-                y: cY + (x + y) * sin - (z * isoScale)
+                x: cX + rx,
+                y: cY + (ry * sinX) - (z * baseScale * cosX)
             };
         }
 
@@ -2196,45 +2310,57 @@
         let p0B = isoProject(-bx/2, -by/2, -bz);
         let p1B = isoProject(bx/2, -by/2, -bz);
         let p2B = isoProject(bx/2, by/2, -bz);
-        let p3B = isoProject(-bx/2, by/2, -bz);
 
-        ctx.fillStyle = '#2b2b3b';
-        ctx.strokeStyle = '#00adb5';
+        ctx.fillStyle = '#1e2030';
+        ctx.strokeStyle = '#3a3d58';
         ctx.lineWidth = 1.5;
-
-        ctx.beginPath();
-        ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.lineTo(p3.x, p3.y); ctx.closePath();
-        ctx.fill(); ctx.stroke();
-
-        ctx.fillStyle = '#1e1e2e';
         ctx.beginPath();
         ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.lineTo(p1B.x, p1B.y); ctx.lineTo(p0B.x, p0B.y); ctx.closePath();
         ctx.fill(); ctx.stroke();
 
-        ctx.fillStyle = '#181825';
+        ctx.fillStyle = '#161725';
         ctx.beginPath();
         ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.lineTo(p2B.x, p2B.y); ctx.lineTo(p1B.x, p1B.y); ctx.closePath();
+        ctx.fill(); ctx.stroke();
+
+        ctx.fillStyle = '#2d3047';
+        ctx.strokeStyle = '#ff9900';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.lineTo(p3.x, p3.y); ctx.closePath();
         ctx.fill(); ctx.stroke();
 
         let pontoAtualInfo = obterPontoAtualAnimacao();
         let limiteIdx = pontoAtualInfo ? pontoAtualInfo.indexLimite : trajetoSimulacaoTotal.length;
 
         for (let i = 0; i < trajetoSimulacaoTotal.length - 1; i++) {
-            let pt1 = isoProject(trajetoSimulacaoTotal[i].x, trajetoSimulacaoTotal[i].y, trajetoSimulacaoTotal[i].z);
-            let pt2 = isoProject(trajetoSimulacaoTotal[i+1].x, trajetoSimulacaoTotal[i+1].y, trajetoSimulacaoTotal[i+1].z);
+            let pt1 = trajetoSimulacaoTotal[i];
+            let pt2 = trajetoSimulacaoTotal[i+1];
+            let p1 = isoProject(pt1.x, pt1.y, pt1.z);
+            let p2 = isoProject(pt2.x, pt2.y, pt2.z);
 
-            ctx.strokeStyle = (i <= limiteIdx) ? trajetoSimulacaoTotal[i].cor : '#3f3f5a';
-            ctx.lineWidth = (i <= limiteIdx) ? 2 : 1;
-
+            let executado = (i <= limiteIdx);
             ctx.beginPath();
-            ctx.moveTo(pt1.x, pt1.y);
-            ctx.lineTo(pt2.x, pt2.y);
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+
+            if (pt2.tipo === 'G0') {
+                ctx.strokeStyle = executado ? '#ff5555' : 'rgba(255, 85, 85, 0.2)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([2, 2]);
+            } else {
+                ctx.strokeStyle = executado ? (pt2.tipo === 'G1' ? '#00adb5' : '#a6e3a1') : 'rgba(0, 173, 181, 0.15)';
+                ctx.lineWidth = executado ? 2 : 1;
+                ctx.setLineDash([]);
+            }
+
             ctx.stroke();
         }
+        ctx.setLineDash([]);
 
         if (pontoAtualInfo) {
             let pos3D = isoProject(pontoAtualInfo.x, pontoAtualInfo.y, pontoAtualInfo.z);
-            let posTopo3D = isoProject(pontoAtualInfo.x, pontoAtualInfo.y, pontoAtualInfo.z + 25);
+            let posTopo3D = isoProject(pontoAtualInfo.x, pontoAtualInfo.y, pontoAtualInfo.z + 40);
 
             ctx.strokeStyle = '#ffb86c';
             ctx.lineWidth = 4;
@@ -2248,31 +2374,61 @@
             ctx.arc(pos3D.x, pos3D.y, 4, 0, Math.PI * 2);
             ctx.fill();
         }
-
-        ctx.fillStyle = '#eeeeee';
-        ctx.font = 'bold 11px Segoe UI';
-        ctx.fillText(`Simulação 3D | Bruto: ${bx} x ${by} x ${bz} mm`, 15, 25);
     }
 
     function vincularEscutasSimulador() {
+        const canvas = document.getElementById('mainSimCanvas');
+        if (!canvas) return;
+
+        canvas.addEventListener('mousedown', e => {
+            isDraggingSim = true;
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+        });
+
+        window.addEventListener('mouseup', () => isDraggingSim = false);
+
+        canvas.addEventListener('mousemove', e => {
+            if (!isDraggingSim) return;
+            let dx = e.clientX - lastMouseX;
+            let dy = e.clientY - lastMouseY;
+
+            if (modoSimuladorAtual === '3D') {
+                simCamRotZ += dx * 0.01;
+                simCamRotX += dy * 0.01;
+                simCamRotX = Math.max(0.1, Math.min(Math.PI / 2.1, simCamRotX));
+            } else {
+                simCamPanX += dx;
+                simCamPanY += dy;
+            }
+
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+            atualizarSimulador();
+        });
+
+        canvas.addEventListener('wheel', e => {
+            e.preventDefault();
+            if (e.deltaY < 0) simCamZoom *= 1.1;
+            else simCamZoom /= 1.1;
+            simCamZoom = Math.max(0.3, Math.min(5.0, simCamZoom));
+            atualizarSimulador();
+        }, { passive: false });
+
         document.querySelectorAll('input, select').forEach(el => {
             el.addEventListener('input', atualizarSimulador);
             el.addEventListener('change', atualizarSimulador);
         });
     }
 
-    // --- LÓGICA DA CALCULADORA ---
+    // --- CALCULADORA ---
     let calcExpressao = "0";
     let calcAns = 0;
     let calcNovaEntrada = true;
 
     function alternarCalculadora() {
         const modal = document.getElementById('calcModal');
-        if (modal.style.display === 'block') {
-            modal.style.display = 'none';
-        } else {
-            modal.style.display = 'block';
-        }
+        modal.style.display = (modal.style.display === 'block') ? 'none' : 'block';
     }
 
     function atualizarDisplayCalc() {
@@ -2354,9 +2510,7 @@
         const header = document.getElementById("calcHeader");
         let posX = 0, posY = 0, mouseX = 0, mouseY = 0;
 
-        if (header) {
-            header.onmousedown = arrastarMouseDown;
-        }
+        if (header) header.onmousedown = arrastarMouseDown;
 
         function arrastarMouseDown(e) {
             e.preventDefault();
@@ -2397,12 +2551,6 @@
         }
     });
 
-    function liberarBotoesAcao() {
-        document.getElementById('btnCopiar').disabled = false;
-        document.getElementById('btnBaixarTxt').disabled = false;
-        codigoFoiCopiado = false;
-    }
-
     function abrirAba(idAba, elementoBotao) {
         document.querySelectorAll('.tab-content').forEach(aba => aba.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -2414,12 +2562,7 @@
 
     function alternarAcabamentoMatriz() {
         const opcao = document.getElementById('m_execAcab').value;
-        const bloco = document.getElementById('blocoAcabamentoMatriz');
-        if (opcao === 'NAO') {
-            bloco.style.display = 'none';
-        } else {
-            bloco.style.display = 'block';
-        }
+        document.getElementById('blocoAcabamentoMatriz').style.display = (opcao === 'NAO') ? 'none' : 'block';
     }
 
     function alternarCamposPadrao() {
@@ -2451,16 +2594,10 @@
 
     function alternarOpcaoContornoRaio() {
         const comContorno = document.getElementById('cav_execContornoRaio').checked;
-        const bloco = document.getElementById('blocoParametrosContornoRaio');
-        if (comContorno) {
-            bloco.style.display = 'block';
-        } else {
-            bloco.style.display = 'none';
-        }
+        document.getElementById('blocoParametrosContornoRaio').style.display = comContorno ? 'block' : 'none';
         validarCavidade();
     }
 
-    // --- GERENCIAMENTO DAS BROCAS DE ALÍVIO ---
     function renderizarTabelaBrocasAlivio() {
         const tbody = document.getElementById('corpoTabelaBrocasAlivio');
         tbody.innerHTML = '';
@@ -2513,7 +2650,6 @@
         atualizarSimulador();
     }
 
-    // --- TABELA DE FUROS ABA 4 ---
     function renderizarTabelaFuros() {
         const tbody = document.getElementById('corpoTabelaFuros');
         tbody.innerHTML = '';
@@ -2716,7 +2852,6 @@
         const execContorno = document.getElementById('cav_execContornoRaio').checked;
 
         const statusBox = document.getElementById('statusCavidade');
-        // Usamos botões tanto da tabela quanto direto, então evitamos erro se for null
 
         if (formato === 'RETANGULAR' && (fresaDiam >= dimX || fresaDiam >= dimY)) {
             statusBox.className = "status-box error";
@@ -2768,20 +2903,16 @@
         }
 
         const centros = obterCentrosCavidades();
-        let msg = '';
-        if (formato === 'RETANGULAR') {
-            msg = `OK: ${centros.length} cavidade(s) ${dimX}x${dimY}mm pronta(s) para adicionar.`;
-        } else {
-            msg = `OK: ${centros.length} cavidade(s) Circular Ø${diamCirc}mm pronta(s) para adicionar.`;
-        }
+        let msg = (formato === 'RETANGULAR') 
+            ? `OK: ${centros.length} cavidade(s) ${dimX}x${dimY}mm pronta(s) para adicionar.` 
+            : `OK: ${centros.length} cavidade(s) Circular Ø${diamCirc}mm pronta(s) para adicionar.`;
         
         statusBox.className = "status-box ok";
         statusBox.innerHTML = msg;
         return true;
     }
 
-    // --- FUNÇÕES GERADORAS DE CÓDIGO NO PADRÃO CNC REAL ---
-
+    // --- GERADORES DE CÓDIGO G-CODE ---
     function obterBlocoFaceamento(oleo, useM01) {
         if (listaFaceamentos.length === 0) {
             alert("A lista de faceamentos está vazia! Adicione pelo menos uma operação na Aba 1.");
@@ -3173,7 +3304,6 @@
         return gcode;
     }
 
-    // --- NOVA LÓGICA GERADORA DE CAVIDADES COM ARRAY E CÍRCULOS (ABA 5) ---
     function obterBlocoCavidade(zeroPeca, oleo, useM01) {
         if (listaCavidadesCadastradas.length === 0) {
             alert("A lista de cavidades cadastradas está vazia! Adicione pelo menos uma operação na Aba 5.");
@@ -3185,7 +3315,6 @@
         listaCavidadesCadastradas.forEach((cav, index) => {
             gcode += `(CAVIDADE-CADASTRADA-${index + 1})\n`;
 
-            // ALÍVIO DA CAVIDADE
             if (cav.execAlivio && cav.brocas.length > 0) {
                 cav.brocas.forEach((broca) => {
                     gcode += `T${broca.t}M6\n`;
@@ -3214,7 +3343,6 @@
                 });
             }
 
-            // DESBASTE DA CAVIDADE
             gcode += `T${cav.fresaT}M6\n`;
             if (useM01) gcode += `M01\n`;
             gcode += `G43H${cav.fresaT}G0Z150\n`;
@@ -3258,7 +3386,6 @@
                         }
                         gcode += `G1Y${centro.y.toFixed(2)}\n`;
                     } else {
-                        // RETANGULAR
                         let minBoundaryX = centro.x - (cav.dimX / 2) + (cav.fresaDiam / 2) + folgaDesbaste;
                         let maxBoundaryX = centro.x + (cav.dimX / 2) - (cav.fresaDiam / 2) - folgaDesbaste;
                         let minBoundaryY = centro.y - (cav.dimY / 2) + (cav.fresaDiam / 2) + folgaDesbaste;
@@ -3302,7 +3429,6 @@
             gcode += `G0Z150\n`;
             gcode += `M05M9\n\n`;
 
-            // ACABAMENTO/CONTORNO DA CAVIDADE
             if (cav.execContorno) {
                 gcode += `(ACABAMENTO-CAVIDADE-${index + 1})\n`;
                 gcode += `T${cav.acabT}M6\n`;
@@ -3357,7 +3483,6 @@
         return gcode;
     }
 
-    // --- LÓGICA GERADORA DA ABA LINEAR/CIRCULAR ---
     function obterBlocoLinear(zeroPeca, oleo, useM01) {
         if (listaLinearCirc.length === 0) {
             alert("A lista de fresagem linear/circular está vazia! Adicione pelo menos uma operação na Aba 6.");
@@ -3415,7 +3540,7 @@
         return gcode;
     }
 
-    // --- PROGRAMA COMBINADO INTEGRADO ---
+    // --- EXECUÇÃO DOS GERADORES ---
     function gerarProgramaCombinado() {
         const incFace = document.getElementById('chk_faceamento').checked;
         const incCont = document.getElementById('chk_contorno').checked;
@@ -3600,7 +3725,6 @@
         alert("Programa CNC copiado para a área de transferência!");
     }
 
-    // --- RELATÓRIO TXT ---
     function baixarRelatorioTXT() {
         const incFace = document.getElementById('chk_faceamento').checked;
         const incCont = document.getElementById('chk_contorno').checked;
@@ -3685,7 +3809,6 @@
             operacoesResumo.push(`- Lista de Furações (${listaFurosCustom.length} furos): Tempo ~ ${tempoFuração.toFixed(2)} min`);
         }
 
-        // NOVO CÁLCULO DE RELATÓRIO PARA MÚLTIPLAS CAVIDADES (RET/CIRC)
         if (incCav && listaCavidadesCadastradas.length > 0) {
             let tempoCavTotal = 0;
             listaCavidadesCadastradas.forEach((cav, idx) => {
@@ -3757,9 +3880,9 @@
 
     window.onload = function() {
         renderizarTabelaFaceamentos();
-        renderizarTabelaCavidades(); // INICIALIZA A NOVA TABELA
+        renderizarTabelaCavidades();
         renderizarTabelaLinearCirc();
-        alternarFormatoCavidade();   // INICIALIZA O FORMATO
+        alternarFormatoCavidade();
         alternarAcabamentoMatriz();
         alternarAcabamentoContorno();
         alternarCamposPadrao();
