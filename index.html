@@ -142,6 +142,52 @@
             cursor: pointer;
         }
 
+        /* --- ESTILOS DE ORDENAÇÃO DE TAREFAS --- */
+        .task-order-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #181825;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .task-item-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .task-item-btns {
+            display: flex;
+            gap: 4px;
+        }
+
+        .btn-order {
+            background-color: #313244;
+            color: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 3px 8px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-order:hover {
+            background-color: var(--accent);
+            border-color: var(--accent);
+        }
+
         label {
             font-size: 0.8rem;
             margin-bottom: 3px;
@@ -669,31 +715,10 @@
 
         <!-- ABA COMPLETA: MULTI-OPERAÇÕES -->
         <div id="aba-combinado" class="tab-content active">
-            <h2>Seleção de Operações do Programa Único</h2>
-            <div class="checkbox-group">
-                <input type="checkbox" id="chk_faceamento" checked>
-                <label for="chk_faceamento" style="margin:0; cursor:pointer; color:#fff; font-weight:bold;">1. Incluir Operação(ões) de Faceamento</label>
-            </div>
-            <div class="checkbox-group">
-                <input type="checkbox" id="chk_contorno" checked>
-                <label for="chk_contorno" style="margin:0; cursor:pointer; color:#fff; font-weight:bold;">2. Incluir Operação de Contorno Externo</label>
-            </div>
-            <div class="checkbox-group">
-                <input type="checkbox" id="chk_matriz" checked>
-                <label for="chk_matriz" style="margin:0; cursor:pointer; color:#fff; font-weight:bold;">3. Incluir Operação de Matriz de Ilhas</label>
-            </div>
-            <div class="checkbox-group">
-                <input type="checkbox" id="chk_lista_furos" checked>
-                <label for="chk_lista_furos" style="margin:0; cursor:pointer; color:#fff; font-weight:bold;">4. Incluir Furações (Lista/Padrões)</label>
-            </div>
-            <div class="checkbox-group">
-                <input type="checkbox" id="chk_cavidade" checked>
-                <label for="chk_cavidade" style="margin:0; cursor:pointer; color:#fff; font-weight:bold;">5. Incluir Usinagem de Cavidade(s) Reta(s)/Circulares</label>
-            </div>
-            <div class="checkbox-group" style="border-color: var(--accent);">
-                <input type="checkbox" id="chk_linear" checked>
-                <label for="chk_linear" style="margin:0; cursor:pointer; color:var(--accent); font-weight:bold;">6. Incluir Fresagem Linear / Circular</label>
-            </div>
+            <h2>Seleção e Ordem das Operações do Programa Único</h2>
+            
+            <!-- LISTA DE TAREFAS REORDENÁVEL -->
+            <div id="lista-ordem-tarefas" class="task-order-list"></div>
 
             <h2>Parâmetros Gerais do Bruto</h2>
             <div class="form-group">
@@ -1669,6 +1694,54 @@
     let isDraggingSim = false;
     let lastMouseX = 0;
     let lastMouseY = 0;
+
+    // ESTRUTURA DE TAREFAS COM REORDENAÇÃO DINÂMICA
+    let ordemTarefas = [
+        { id: 'faceamento', label: '1. Operação(ões) de Faceamento', chkId: 'chk_faceamento', checked: true },
+        { id: 'contorno', label: '2. Operação de Contorno Externo', chkId: 'chk_contorno', checked: true },
+        { id: 'matriz', label: '3. Operação de Matriz de Ilhas', chkId: 'chk_matriz', checked: true },
+        { id: 'lista_furos', label: '4. Furações (Lista/Padrões)', chkId: 'chk_lista_furos', checked: true },
+        { id: 'cavidade', label: '5. Usinagem de Cavidade(s) Reta(s)/Circulares', chkId: 'chk_cavidade', checked: true },
+        { id: 'linear', label: '6. Fresagem Linear / Circular', chkId: 'chk_linear', checked: true }
+    ];
+
+    function renderizarListaOrdemTarefas() {
+        const container = document.getElementById('lista-ordem-tarefas');
+        if (!container) return;
+        container.innerHTML = '';
+
+        ordemTarefas.forEach((t, index) => {
+            const div = document.createElement('div');
+            div.className = 'task-item';
+            div.innerHTML = `
+                <div class="task-item-info">
+                    <input type="checkbox" id="${t.chkId}" ${t.checked ? 'checked' : ''} onchange="atualizarCheckTarefa('${t.id}', this.checked)">
+                    <label for="${t.chkId}" style="margin:0; cursor:pointer; color:#fff; font-weight:bold;">${t.label}</label>
+                </div>
+                <div class="task-item-btns">
+                    <button class="btn-order" onclick="moverTarefa(${index}, -1)">▲ Subir</button>
+                    <button class="btn-order" onclick="moverTarefa(${index}, 1)">▼ Descer</button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function atualizarCheckTarefa(id, isChecked) {
+        const t = ordemTarefas.find(item => item.id === id);
+        if (t) t.checked = isChecked;
+    }
+
+    function moverTarefa(index, direcao) {
+        const novoIndex = index + direcao;
+        if (novoIndex < 0 || novoIndex >= ordemTarefas.length) return;
+        
+        const temp = ordemTarefas[index];
+        ordemTarefas[index] = ordemTarefas[novoIndex];
+        ordemTarefas[novoIndex] = temp;
+        
+        renderizarListaOrdemTarefas();
+    }
 
     // LISTAS DINÂMICAS
     let listaFaceamentos = [
@@ -3542,14 +3615,9 @@
 
     // --- EXECUÇÃO DOS GERADORES ---
     function gerarProgramaCombinado() {
-        const incFace = document.getElementById('chk_faceamento').checked;
-        const incCont = document.getElementById('chk_contorno').checked;
-        const incMatr = document.getElementById('chk_matriz').checked;
-        const incList = document.getElementById('chk_lista_furos').checked;
-        const incCav  = document.getElementById('chk_cavidade').checked;
-        const incLin  = document.getElementById('chk_linear').checked;
+        const tarefasAtivas = ordemTarefas.filter(t => t.checked);
 
-        if (!incFace && !incCont && !incMatr && !incList && !incCav && !incLin) {
+        if (tarefasAtivas.length === 0) {
             alert("Selecione pelo menos uma operação para gerar o programa!");
             return;
         }
@@ -3561,38 +3629,24 @@
         let gcode = `%\(Gerador Integrado G-Code CNC)\n`;
         gcode += `#24=${zeroPeca.replace('G', '')}(PONTO.ZERO)\n\n`;
 
-        if (incFace) {
-            let bloco = obterBlocoFaceamento(oleo, useM01);
-            if (bloco === null) return;
-            gcode += bloco;
-        }
+        for (let task of ordemTarefas) {
+            if (!task.checked) continue;
 
-        if (incCont) {
-            let bloco = obterBlocoContorno(zeroPeca, oleo, useM01);
-            if (bloco === null) return;
-            gcode += bloco;
-        }
+            let bloco = null;
+            if (task.id === 'faceamento') {
+                bloco = obterBlocoFaceamento(oleo, useM01);
+            } else if (task.id === 'contorno') {
+                bloco = obterBlocoContorno(zeroPeca, oleo, useM01);
+            } else if (task.id === 'matriz') {
+                bloco = obterBlocoMatriz(zeroPeca, oleo, useM01);
+            } else if (task.id === 'lista_furos') {
+                bloco = obterBlocoListaFuros(zeroPeca, oleo, useM01);
+            } else if (task.id === 'cavidade') {
+                bloco = obterBlocoCavidade(zeroPeca, oleo, useM01);
+            } else if (task.id === 'linear') {
+                bloco = obterBlocoLinear(zeroPeca, oleo, useM01);
+            }
 
-        if (incMatr) {
-            let bloco = obterBlocoMatriz(zeroPeca, oleo, useM01);
-            if (bloco === null) return;
-            gcode += bloco;
-        }
-
-        if (incList) {
-            let bloco = obterBlocoListaFuros(zeroPeca, oleo, useM01);
-            if (bloco === null) return;
-            gcode += bloco;
-        }
-
-        if (incCav) {
-            let bloco = obterBlocoCavidade(zeroPeca, oleo, useM01);
-            if (bloco === null) return;
-            gcode += bloco;
-        }
-
-        if (incLin) {
-            let bloco = obterBlocoLinear(zeroPeca, oleo, useM01);
             if (bloco === null) return;
             gcode += bloco;
         }
@@ -3605,64 +3659,36 @@
         resetarAnimacaoSimulador();
     }
 
-    function gerarFaceamento() {
-        document.getElementById('chk_faceamento').checked = true;
-        document.getElementById('chk_contorno').checked = false;
-        document.getElementById('chk_matriz').checked = false;
-        document.getElementById('chk_lista_furos').checked = false;
-        document.getElementById('chk_cavidade').checked = false;
-        document.getElementById('chk_linear').checked = false;
+    function definirApenasUmaTarefa(idTarefa) {
+        ordemTarefas.forEach(t => {
+            t.checked = (t.id === idTarefa);
+        });
+        renderizarListaOrdemTarefas();
         gerarProgramaCombinado();
+    }
+
+    function gerarFaceamento() {
+        definirApenasUmaTarefa('faceamento');
     }
 
     function gerarContornoRampa() {
-        document.getElementById('chk_faceamento').checked = false;
-        document.getElementById('chk_contorno').checked = true;
-        document.getElementById('chk_matriz').checked = false;
-        document.getElementById('chk_lista_furos').checked = false;
-        document.getElementById('chk_cavidade').checked = false;
-        document.getElementById('chk_linear').checked = false;
-        gerarProgramaCombinado();
+        definirApenasUmaTarefa('contorno');
     }
 
     function gerarMatriz() {
-        document.getElementById('chk_faceamento').checked = false;
-        document.getElementById('chk_contorno').checked = false;
-        document.getElementById('chk_matriz').checked = true;
-        document.getElementById('chk_lista_furos').checked = false;
-        document.getElementById('chk_cavidade').checked = false;
-        document.getElementById('chk_linear').checked = false;
-        gerarProgramaCombinado();
+        definirApenasUmaTarefa('matriz');
     }
 
     function gerarListaFurosGCode() {
-        document.getElementById('chk_faceamento').checked = false;
-        document.getElementById('chk_contorno').checked = false;
-        document.getElementById('chk_matriz').checked = false;
-        document.getElementById('chk_lista_furos').checked = true;
-        document.getElementById('chk_cavidade').checked = false;
-        document.getElementById('chk_linear').checked = false;
-        gerarProgramaCombinado();
+        definirApenasUmaTarefa('lista_furos');
     }
 
     function gerarCavidadeGCode() {
-        document.getElementById('chk_faceamento').checked = false;
-        document.getElementById('chk_contorno').checked = false;
-        document.getElementById('chk_matriz').checked = false;
-        document.getElementById('chk_lista_furos').checked = false;
-        document.getElementById('chk_cavidade').checked = true;
-        document.getElementById('chk_linear').checked = false;
-        gerarProgramaCombinado();
+        definirApenasUmaTarefa('cavidade');
     }
-    
+
     function gerarLinearCircular() {
-        document.getElementById('chk_faceamento').checked = false;
-        document.getElementById('chk_contorno').checked = false;
-        document.getElementById('chk_matriz').checked = false;
-        document.getElementById('chk_lista_furos').checked = false;
-        document.getElementById('chk_cavidade').checked = false;
-        document.getElementById('chk_linear').checked = true;
-        gerarProgramaCombinado();
+        definirApenasUmaTarefa('linear');
     }
 
     function validarMatriz() {
@@ -3726,120 +3752,117 @@
     }
 
     function baixarRelatorioTXT() {
-        const incFace = document.getElementById('chk_faceamento').checked;
-        const incCont = document.getElementById('chk_contorno').checked;
-        const incMatr = document.getElementById('chk_matriz').checked;
-        const incList = document.getElementById('chk_lista_furos').checked;
-        const incCav  = document.getElementById('chk_cavidade').checked;
-        const incLin  = document.getElementById('chk_linear').checked;
-
         let ferramentasUsadas = [];
         let operacoesResumo = [];
         let tempoTotalMinutos = 0;
 
-        if (incFace && listaFaceamentos.length > 0) {
-            listaFaceamentos.forEach((f, idx) => {
-                ferramentasUsadas.push({ t: f.numT, diam: f.diam, tipo: 'Cabeçote de Facear' });
-                let distPasse = (f.compX + f.diam * 2) * (f.largY / (f.diam * 0.6));
-                let qtdPassesZ = Math.ceil(Math.abs(f.zFinal - f.zInicial) / f.zPasse);
-                let tempoMin = (distPasse * qtdPassesZ) / f.avanco;
+        for (let task of ordemTarefas) {
+            if (!task.checked) continue;
+
+            if (task.id === 'faceamento' && listaFaceamentos.length > 0) {
+                listaFaceamentos.forEach((f, idx) => {
+                    ferramentasUsadas.push({ t: f.numT, diam: f.diam, tipo: 'Cabeçote de Facear' });
+                    let distPasse = (f.compX + f.diam * 2) * (f.largY / (f.diam * 0.6));
+                    let qtdPassesZ = Math.ceil(Math.abs(f.zFinal - f.zInicial) / f.zPasse);
+                    let tempoMin = (distPasse * qtdPassesZ) / f.avanco;
+                    tempoTotalMinutos += tempoMin;
+
+                    operacoesResumo.push(`- Faceamento ${idx + 1}: ${f.compX}x${f.largY}mm | Z = ${f.zInicial} ➔ ${f.zFinal} mm | T${f.numT} (Ø${f.diam}mm) | Tempo ~ ${tempoMin.toFixed(2)} min`);
+                });
+            }
+
+            if (task.id === 'contorno') {
+                const t = parseInt(document.getElementById('c_numTDesb').value);
+                const diam = parseFloat(document.getElementById('c_diamDesb').value);
+                const zFinal = Math.abs(parseFloat(document.getElementById('c_zFinal').value));
+                const avanco = parseInt(document.getElementById('c_avancoDesb').value);
+                const compX = parseFloat(document.getElementById('c_compX').value);
+                const largY = parseFloat(document.getElementById('c_largY').value);
+                const zPasse = parseFloat(document.getElementById('c_zPasse').value);
+
+                ferramentasUsadas.push({ t, diam, tipo: 'Fresa Desbaste Contorno' });
+                let perimetro = (compX + largY) * 2;
+                let voltas = Math.ceil(zFinal / zPasse);
+                let tempoMin = (perimetro * voltas) / avanco;
+
+                if (document.getElementById('c_execAcab').value === 'SIM') {
+                    const tAcab = parseInt(document.getElementById('c_numTAcab').value);
+                    const diamAcab = parseFloat(document.getElementById('c_diamAcab').value);
+                    const avancoAcab = parseInt(document.getElementById('c_avancoAcab').value);
+                    ferramentasUsadas.push({ t: tAcab, diam: diamAcab, tipo: 'Fresa Acabamento Contorno' });
+                    tempoMin += (perimetro / avancoAcab);
+                }
+
+                tempoTotalMinutos += tempoMin;
+                operacoesResumo.push(`- Contorno Externo: Profundidade Z = -${zFinal.toFixed(1)} mm | Tempo ~ ${tempoMin.toFixed(2)} min`);
+            }
+
+            if (task.id === 'matriz') {
+                const tDesb = parseInt(document.getElementById('m_numT').value);
+                const diamDesb = parseFloat(document.getElementById('m_diam').value);
+                const zFinal = Math.abs(parseFloat(document.getElementById('m_zFinal').value));
+                const avancoDesb = parseInt(document.getElementById('m_avanco').value);
+                const colunas = parseInt(document.getElementById('m_colunas').value);
+                const linhas = parseInt(document.getElementById('m_linhas').value);
+
+                ferramentasUsadas.push({ t: tDesb, diam: diamDesb, tipo: 'Fresa Desbaste Ilhas' });
+                let tempoMin = ((colunas * linhas) * zFinal * 400) / avancoDesb;
+
+                if (document.getElementById('m_execAcab').value === 'SIM') {
+                    const tAcab = parseInt(document.getElementById('m_numTAcab').value);
+                    const diamAcab = parseFloat(document.getElementById('m_diamAcab').value);
+                    ferramentasUsadas.push({ t: tAcab, diam: diamAcab, tipo: 'Fresa Acabamento Ilhas' });
+                    tempoMin += 1.5;
+                }
                 tempoTotalMinutos += tempoMin;
 
-                operacoesResumo.push(`- Faceamento ${idx + 1}: ${f.compX}x${f.largY}mm | Z = ${f.zInicial} ➔ ${f.zFinal} mm | T${f.numT} (Ø${f.diam}mm) | Tempo ~ ${tempoMin.toFixed(2)} min`);
-            });
-        }
-
-        if (incCont) {
-            const t = parseInt(document.getElementById('c_numTDesb').value);
-            const diam = parseFloat(document.getElementById('c_diamDesb').value);
-            const zFinal = Math.abs(parseFloat(document.getElementById('c_zFinal').value));
-            const avanco = parseInt(document.getElementById('c_avancoDesb').value);
-            const compX = parseFloat(document.getElementById('c_compX').value);
-            const largY = parseFloat(document.getElementById('c_largY').value);
-            const zPasse = parseFloat(document.getElementById('c_zPasse').value);
-
-            ferramentasUsadas.push({ t, diam, tipo: 'Fresa Desbaste Contorno' });
-            let perimetro = (compX + largY) * 2;
-            let voltas = Math.ceil(zFinal / zPasse);
-            let tempoMin = (perimetro * voltas) / avanco;
-
-            if (document.getElementById('c_execAcab').value === 'SIM') {
-                const tAcab = parseInt(document.getElementById('c_numTAcab').value);
-                const diamAcab = parseFloat(document.getElementById('c_diamAcab').value);
-                const avancoAcab = parseInt(document.getElementById('c_avancoAcab').value);
-                ferramentasUsadas.push({ t: tAcab, diam: diamAcab, tipo: 'Fresa Acabamento Contorno' });
-                tempoMin += (perimetro / avancoAcab);
+                operacoesResumo.push(`- Matriz de Ilhas (${colunas}x${linhas}): Profundidade Z = -${zFinal.toFixed(1)} mm | Tempo ~ ${tempoMin.toFixed(2)} min`);
             }
 
-            tempoTotalMinutos += tempoMin;
-            operacoesResumo.push(`- Contorno Externo: Profundidade Z = -${zFinal.toFixed(1)} mm | Tempo ~ ${tempoMin.toFixed(2)} min`);
-        }
-
-        if (incMatr) {
-            const tDesb = parseInt(document.getElementById('m_numT').value);
-            const diamDesb = parseFloat(document.getElementById('m_diam').value);
-            const zFinal = Math.abs(parseFloat(document.getElementById('m_zFinal').value));
-            const avancoDesb = parseInt(document.getElementById('m_avanco').value);
-            const colunas = parseInt(document.getElementById('m_colunas').value);
-            const linhas = parseInt(document.getElementById('m_linhas').value);
-
-            ferramentasUsadas.push({ t: tDesb, diam: diamDesb, tipo: 'Fresa Desbaste Ilhas' });
-            let tempoMin = ((colunas * linhas) * zFinal * 400) / avancoDesb;
-
-            if (document.getElementById('m_execAcab').value === 'SIM') {
-                const tAcab = parseInt(document.getElementById('m_numTAcab').value);
-                const diamAcab = parseFloat(document.getElementById('m_diamAcab').value);
-                ferramentasUsadas.push({ t: tAcab, diam: diamAcab, tipo: 'Fresa Acabamento Ilhas' });
-                tempoMin += 1.5;
+            if (task.id === 'lista_furos' && listaFurosCustom.length > 0) {
+                let tempoFuração = 0;
+                listaFurosCustom.forEach(furo => {
+                    ferramentasUsadas.push({ t: furo.t, diam: furo.diam, tipo: 'Broca' });
+                    let picaPaus = Math.ceil(furo.zFinal / furo.qPasse);
+                    let distTotalMM = furo.zFinal * picaPaus;
+                    tempoFuração += (distTotalMM / furo.avanco);
+                });
+                tempoTotalMinutos += tempoFuração;
+                operacoesResumo.push(`- Lista de Furações (${listaFurosCustom.length} furos): Tempo ~ ${tempoFuração.toFixed(2)} min`);
             }
-            tempoTotalMinutos += tempoMin;
 
-            operacoesResumo.push(`- Matriz de Ilhas (${colunas}x${linhas}): Profundidade Z = -${zFinal.toFixed(1)} mm | Tempo ~ ${tempoMin.toFixed(2)} min`);
-        }
+            if (task.id === 'cavidade' && listaCavidadesCadastradas.length > 0) {
+                let tempoCavTotal = 0;
+                listaCavidadesCadastradas.forEach((cav, idx) => {
+                    if (cav.execAlivio) {
+                        cav.brocas.forEach(b => {
+                            ferramentasUsadas.push({ t: b.t, diam: b.diam, tipo: 'Broca Pré-Furo Alívio' });
+                        });
+                    }
+                    ferramentasUsadas.push({ t: cav.fresaT, diam: cav.fresaDiam, tipo: 'Fresa Desbaste Cavidade' });
+                    if (cav.execContorno) {
+                        ferramentasUsadas.push({ t: cav.acabT, diam: cav.acabDiam, tipo: 'Fresa Acab. Cavidade' });
+                    }
 
-        if (incList && listaFurosCustom.length > 0) {
-            let tempoFuração = 0;
-            listaFurosCustom.forEach(furo => {
-                ferramentasUsadas.push({ t: furo.t, diam: furo.diam, tipo: 'Broca' });
-                let picaPaus = Math.ceil(furo.zFinal / furo.qPasse);
-                let distTotalMM = furo.zFinal * picaPaus;
-                tempoFuração += (distTotalMM / furo.avanco);
-            });
-            tempoTotalMinutos += tempoFuração;
-            operacoesResumo.push(`- Lista de Furações (${listaFurosCustom.length} furos): Tempo ~ ${tempoFuração.toFixed(2)} min`);
-        }
+                    let descFormato = cav.formato === 'CIRCULAR' ? `Circular Ø${cav.diamCirc}` : `Reta ${cav.dimX}x${cav.dimY}`;
+                    let tempoMin = cav.centros.length * ((cav.execAlivio ? cav.brocas.length * 0.8 : 0) + (cav.zFinalAbs * 0.3) + (cav.execContorno ? 1.2 : 0));
+                    tempoCavTotal += tempoMin;
+                    
+                    operacoesResumo.push(`- Cavidade ${idx + 1} (${descFormato}) [${cav.centros.length} centro(s)]: Profundidade Z = -${cav.zFinalAbs.toFixed(1)} mm | Tempo ~ ${tempoMin.toFixed(2)} min`);
+                });
+                tempoTotalMinutos += tempoCavTotal;
+            }
 
-        if (incCav && listaCavidadesCadastradas.length > 0) {
-            let tempoCavTotal = 0;
-            listaCavidadesCadastradas.forEach((cav, idx) => {
-                if (cav.execAlivio) {
-                    cav.brocas.forEach(b => {
-                        ferramentasUsadas.push({ t: b.t, diam: b.diam, tipo: 'Broca Pré-Furo Alívio' });
-                    });
-                }
-                ferramentasUsadas.push({ t: cav.fresaT, diam: cav.fresaDiam, tipo: 'Fresa Desbaste Cavidade' });
-                if (cav.execContorno) {
-                    ferramentasUsadas.push({ t: cav.acabT, diam: cav.acabDiam, tipo: 'Fresa Acab. Cavidade' });
-                }
-
-                let descFormato = cav.formato === 'CIRCULAR' ? `Circular Ø${cav.diamCirc}` : `Reta ${cav.dimX}x${cav.dimY}`;
-                let tempoMin = cav.centros.length * ((cav.execAlivio ? cav.brocas.length * 0.8 : 0) + (cav.zFinalAbs * 0.3) + (cav.execContorno ? 1.2 : 0));
-                tempoCavTotal += tempoMin;
-                
-                operacoesResumo.push(`- Cavidade ${idx + 1} (${descFormato}) [${cav.centros.length} centro(s)]: Profundidade Z = -${cav.zFinalAbs.toFixed(1)} mm | Tempo ~ ${tempoMin.toFixed(2)} min`);
-            });
-            tempoTotalMinutos += tempoCavTotal;
-        }
-        
-        if (incLin && listaLinearCirc.length > 0) {
-            let tempoLinTotal = 0;
-            listaLinearCirc.forEach((op, idx) => {
-                ferramentasUsadas.push({ t: op.numT, diam: op.diam, tipo: `Fresa Lin/Circ (${op.tipo})` });
-                let tempoMin = (op.zFinal * 0.5) + 0.5;
-                tempoLinTotal += tempoMin;
-                operacoesResumo.push(`- Fresagem Linear/Circ ${idx + 1} (${op.tipo}): Profundidade Z = -${op.zFinal.toFixed(1)} mm | Tempo ~ ${tempoMin.toFixed(2)} min`);
-            });
-            tempoTotalMinutos += tempoLinTotal;
+            if (task.id === 'linear' && listaLinearCirc.length > 0) {
+                let tempoLinTotal = 0;
+                listaLinearCirc.forEach((op, idx) => {
+                    ferramentasUsadas.push({ t: op.numT, diam: op.diam, tipo: `Fresa Lin/Circ (${op.tipo})` });
+                    let tempoMin = (op.zFinal * 0.5) + 0.5;
+                    tempoLinTotal += tempoMin;
+                    operacoesResumo.push(`- Fresagem Linear/Circ ${idx + 1} (${op.tipo}): Profundidade Z = -${op.zFinal.toFixed(1)} mm | Tempo ~ ${tempoMin.toFixed(2)} min`);
+                });
+                tempoTotalMinutos += tempoLinTotal;
+            }
         }
 
         let ferramentasUnicas = [];
@@ -3879,6 +3902,7 @@
     }
 
     window.onload = function() {
+        renderizarListaOrdemTarefas();
         renderizarTabelaFaceamentos();
         renderizarTabelaCavidades();
         renderizarTabelaLinearCirc();
