@@ -692,6 +692,16 @@
                 gap: 10px;
             }
         }
+    
+        /* Refinamento visual do simulador e do editor de peça */
+        .sim-wrapper { background:linear-gradient(145deg,#171b29,#0b101a); border-color:#38465c; }
+        .sim-canvas-container { background:radial-gradient(ellipse at 50% 45%,#172334 0%,#0a1019 72%); }
+        .sim-hud-overlay { min-width:220px; line-height:1.45; box-shadow:0 8px 24px #0008; }
+        .sim-hud-item { color:#d5e6f3; }
+        .sim-hud-item span { color:#91a5ba; }
+        .sim-controls-bar { flex-wrap:wrap; }
+        .sim-progress-slider { min-width:100px; }
+        @media(max-width:700px) { canvas.sim-canvas {height:270px;} .sim-header-bar{align-items:flex-start;gap:8px;flex-direction:column;} .sim-controls-bar{gap:6px;padding:7px;} }
     </style>
 </head>
 <body>
@@ -706,6 +716,7 @@
         <button class="tab-btn" onclick="abrirAba('aba-lista-furos', this)">4. Lista / Padrões Furos</button>
         <button class="tab-btn" onclick="abrirAba('aba-cavidade', this)">5. Cavidades c/ Alívio</button>
         <button class="tab-btn" onclick="abrirAba('aba-linear', this)">6. Fresagem Linear/Circ.</button>
+        <button class="tab-btn" onclick="abrirAba('aba-peca', this)">7. Peça (Desenho/DXF)</button>
     </div>
 </div>
 
@@ -972,7 +983,7 @@
             </div>
             <div class="form-group">
                 <label for="m_sobremetal">Sobremetal X/Y (mm):</label>
-                <input type="number" id="m_sobremetal" value="0.3" step="0.05">
+                <input type="number" id="m_sobremetal" value="0.3" step="0.05" oninput="validarMatriz()">
             </div>
             <div class="form-group">
                 <label for="m_execAcab">Executar Acabamento?</label>
@@ -988,7 +999,7 @@
                 </div>
                 <div class="form-group">
                     <label for="m_diamAcab">Diâmetro Acabamento (mm):</label>
-                    <input type="number" id="m_diamAcab" value="10" step="0.1">
+                    <input type="number" id="m_diamAcab" value="10" step="0.1" oninput="validarMatriz()">
                 </div>
                 <div class="form-group">
                     <label for="m_rpmAcab">RPM Acabamento:</label>
@@ -1551,6 +1562,84 @@
             <button class="btn-generate" onclick="gerarLinearCircular()">Gerar Apenas Fresagem Lin/Circ</button>
         </div>
 
+        <div id="aba-peca" class="tab-content">
+            <h2>Peça: formas, DXF e usinagem</h2>
+            <div class="status-box warning">Origem X0 Y0 = zero-peça. Topo do material = Z0. Cavidades mergulham na vertical (use fresa de corte central ou pré-fure como FURO). O contorno externo é o último a ser cortado e não tem pestanas.</div>
+            <div class="row-inputs">
+                <div class="form-group"><label for="p_tipo">Forma:</label>
+                    <select id="p_tipo" onchange="pecaCampos()"><option value="RET">Retângulo</option><option value="CIRC">Círculo</option><option value="POLI">Polígono (pontos)</option></select></div>
+                <div class="form-group"><label for="p_func">Função:</label>
+                    <select id="p_func"><option value="EXT">Contorno externo</option><option value="CAV">Cavidade</option><option value="FURO">Furo (G83, só círculo)</option></select></div>
+            </div>
+            <div class="row-inputs">
+                <div class="form-group"><label for="p_cx">Centro X / deslocamento X:</label><input type="number" id="p_cx" value="0" step="0.1"></div>
+                <div class="form-group"><label for="p_cy">Centro Y / deslocamento Y:</label><input type="number" id="p_cy" value="0" step="0.1"></div>
+            </div>
+            <div class="row-inputs" id="p_g_ret">
+                <div class="form-group"><label for="p_dx">Comprimento X (mm):</label><input type="number" id="p_dx" value="100" step="0.1"></div>
+                <div class="form-group"><label for="p_dy">Largura Y (mm):</label><input type="number" id="p_dy" value="60" step="0.1"></div>
+            </div>
+            <div class="row-inputs" id="p_g_circ"><div class="form-group"><label for="p_d">Diâmetro (mm):</label><input type="number" id="p_d" value="20" step="0.1"></div></div>
+            <div class="form-group" id="p_g_poli"><label for="p_pts">Pontos (um "x,y" por linha):</label>
+                <textarea id="p_pts" rows="5" style="width:100%;box-sizing:border-box;background:#181825;color:#eee;border:1px solid var(--border-color);border-radius:4px;">0,0
+80,0
+80,50
+40,70
+0,50</textarea></div>
+            <button class="btn-secondary" onclick="adicionarFormaPeca()">+ Adicionar Forma</button>
+            <div class="form-group" style="margin-top:8px;"><label for="p_dxf">Importar DXF (LWPOLYLINE fechada, LINE encadeado, CIRCLE):</label>
+                <input type="file" id="p_dxf" accept=".dxf" onchange="importarDXF(event)"></div>
+
+            <div id="p_dxf_info" class="status-box" style="background:#181825;border:1px solid var(--border-color);color:#dbe7f0;line-height:1.55;">
+                Dimensões da peça: importe ou desenhe formas para calcular os limites em X e Y.
+            </div>
+            <button id="btnCentralizarPeca" class="btn-secondary" onclick="centralizarPecaNoZero()" disabled>Centralizar peça no zero (X0 / Y0)</button>
+
+            <div style="font-size:.78rem;color:#b9c8d6;margin:6px 0 4px;">Clique perto de um contorno no desenho para escolher a linha de ferramenta mais próxima: dentro, centro ou fora.</div>
+            <canvas id="pecaCanvas" width="440" height="260" onclick="pecaCliqueCanvas(event)" title="Clique próximo a um contorno para escolher a linha da ferramenta" style="width:100%;background:#181825;border:1px solid var(--border-color);border-radius:6px;cursor:crosshair;"></canvas>
+            <table class="table-furos">
+                <thead><tr><th>#</th><th>Forma</th><th>Função</th><th>Dados</th><th>Ação</th></tr></thead>
+                <tbody id="corpoTabelaPeca"></tbody>
+            </table>
+            <button class="btn-secondary" style="background-color: var(--danger); margin-top: 6px;" onclick="listaPeca = []; renderizarPeca();">Limpar Peça</button>
+
+            <h2>FRESA — contornos e cavidades</h2>
+            <div class="row-inputs">
+                <div class="form-group"><label for="p_T">Ferramenta (T):</label><input type="number" id="p_T" value="7"></div>
+                <div class="form-group"><label for="p_diam">Diâmetro (mm):</label><input type="number" id="p_diam" value="10" step="0.1" oninput="desenharPeca()"></div>
+            </div>
+            <div class="row-inputs">
+                <div class="form-group"><label for="p_rpm">RPM:</label><input type="number" id="p_rpm" value="2500"></div>
+                <div class="form-group"><label for="p_avanco">Avanço (mm/min):</label><input type="number" id="p_avanco" value="800"></div>
+            </div>
+            <div class="row-inputs">
+                <div class="form-group"><label for="p_recX">Recuo de entrada padrão em X (mm):</label><input type="number" id="p_recX" value="0" step="0.1" oninput="desenharPeca()"></div>
+                <div class="form-group"><label for="p_recY">Recuo de entrada padrão em Y (mm):</label><input type="number" id="p_recY" value="0" step="0.1" oninput="desenharPeca()"></div>
+            </div>
+            <div class="status-box warning">Linha da ferramenta, ponto de início e recuo de entrada de cada forma são ajustados na linha abaixo dela, na tabela de formas. Recuo positivo afasta a entrada do centro da forma (contorno externo) ou a aproxima do centro (cavidade); valor negativo inverte.</div>
+            <div id="blocoBrocaPeca" style="display:none;border:1px solid #53677b;border-radius:7px;padding:10px;margin:10px 0;background:#171e2a;">
+                <h2 style="color:#89b4fa;">BROCA — furos (ciclo G83)</h2>
+                <div class="status-box" style="background:#121a27;color:#c6d7e8;border:1px solid #34485c;">Parâmetros usados somente nas formas marcadas como “Furo (G83)”. O diâmetro do furo é definido pela forma circular.</div>
+                <div class="row-inputs">
+                    <div class="form-group"><label for="p_Tfuro">Número da broca (T):</label><input type="number" id="p_Tfuro" value="5"></div>
+                    <div class="form-group"><label for="p_rpmFuro">Rotação da broca (RPM):</label><input type="number" id="p_rpmFuro" value="1800"></div>
+                </div>
+                <div class="row-inputs">
+                    <div class="form-group"><label for="p_avFuro">Avanço da broca (mm/min):</label><input type="number" id="p_avFuro" value="220"></div>
+                    <div class="form-group"><label for="p_qFuro">Q pica-pau — avanço por etapa (mm):</label><input type="number" id="p_qFuro" value="3" step="0.1"></div>
+                </div>
+            </div>
+            <h2>Profundidade</h2>
+            <div class="row-inputs">
+                <div class="form-group"><label for="p_zAprox">Z Aproximação (mm):</label><input type="number" id="p_zAprox" value="5" step="0.1"></div>
+                <div class="form-group"><label for="p_zPasse">Passe em Z (mm):</label><input type="number" id="p_zPasse" value="2" step="0.1"></div>
+            </div>
+            <div class="row-inputs">
+                <div class="form-group"><label for="p_zFinal">Profundidade total (mm):</label><input type="number" id="p_zFinal" value="10" step="0.1"></div>
+            </div>
+            <button class="btn-generate" onclick="definirApenasUmaTarefa('peca')">Gerar Usinagem da Peça</button>
+        </div>
+
     </div>
 
     <!-- PAINEL DE SIMULAÇÃO E CÓDIGO CNC -->
@@ -1561,20 +1650,20 @@
             <div class="sim-header-bar">
                 <h3 class="sim-title">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-                    3D & 2D CNC Machining Simulator
+                    Simulador de usinagem CNC
                 </h3>
                 <div class="sim-mode-toggle">
-                    <button id="btnSim2D" class="sim-toggle-btn active" onclick="definirModoSimulador('2D')">Visão 2D (Plano XY)</button>
-                    <button id="btnSim3D" class="sim-toggle-btn" onclick="definirModoSimulador('3D')">Visão 3D (Bruto)</button>
+                    <button id="btnSim2D" class="sim-toggle-btn active" onclick="definirModoSimulador('2D')">2D · Plano XY</button>
+                    <button id="btnSim3D" class="sim-toggle-btn" onclick="definirModoSimulador('3D')">3D · Peça e ferramenta</button>
                 </div>
             </div>
             
             <div class="sim-canvas-container">
                 <canvas id="mainSimCanvas" class="sim-canvas" width="700" height="320"></canvas>
                 <div class="sim-hud-overlay">
-                    <div class="sim-hud-item"><span>FERRAMENTA:</span> <strong id="hudTool">T1 (Ø70.0)</strong></div>
-                    <div class="sim-hud-item"><span>POSIÇÃO:</span> <strong id="hudPos">X: 0.00 | Y: 0.00 | Z: 100.00</strong></div>
-                    <div class="sim-hud-item"><span>MOVIMENTO:</span> <strong id="hudMove" style="color: #00adb5;">G0 (RÁPIDO)</strong></div>
+                    <div class="sim-hud-item"><span>FERRAMENTA ATIVA:</span> <strong id="hudTool">T1 (Ø70.0)</strong></div>
+                    <div class="sim-hud-item"><span>POSIÇÃO (mm):</span> <strong id="hudPos">X: 0.00 | Y: 0.00 | Z: 100.00</strong></div>
+                    <div class="sim-hud-item"><span>TIPO DE MOVIMENTO:</span> <strong id="hudMove" style="color: #00adb5;">G0 (RÁPIDO)</strong></div>
                 </div>
             </div>
             
@@ -1702,7 +1791,8 @@
         { id: 'matriz', label: '3. Operação de Matriz de Ilhas', chkId: 'chk_matriz', checked: true },
         { id: 'lista_furos', label: '4. Furações (Lista/Padrões)', chkId: 'chk_lista_furos', checked: true },
         { id: 'cavidade', label: '5. Usinagem de Cavidade(s) Reta(s)/Circulares', chkId: 'chk_cavidade', checked: true },
-        { id: 'linear', label: '6. Fresagem Linear / Circular', chkId: 'chk_linear', checked: true }
+        { id: 'linear', label: '6. Fresagem Linear / Circular', chkId: 'chk_linear', checked: true },
+        { id: 'peca', label: '7. Peça (Desenho / DXF)', chkId: 'chk_peca', checked: false }
     ];
 
     function renderizarListaOrdemTarefas() {
@@ -1828,7 +1918,11 @@
         const avanco = parseInt(document.getElementById('f_avanco').value) || 600;
         const zInicial = parseFloat(document.getElementById('f_zInicial').value) || 0;
         const zPasse = Math.abs(parseFloat(document.getElementById('f_zPasse').value)) || 0.5;
-        const zFinal = parseFloat(document.getElementById('f_zFinal').value) || -1.0;
+        const zFinal = -Math.abs(numOr('f_zFinal', -1.0));
+        if (zFinal >= zInicial) {
+            alert("ERRO NO FACEAMENTO:\n\nO Z Final deve ficar abaixo do Z Inicial.");
+            return;
+        }
 
         listaFaceamentos.push({ zeroPeca, compX, largY, numT, diam, rpm, avanco, zInicial, zPasse, zFinal });
         renderizarTabelaFaceamentos();
@@ -1992,7 +2086,7 @@
         const acabDiam = parseFloat(document.getElementById('cav_acabDiam').value) || 6.0;
         const acabRpm = parseInt(document.getElementById('cav_acabRpm').value) || 3800;
         const acabAvanco = parseInt(document.getElementById('cav_acabAvanco').value) || 800;
-        const sobremetalParedes = parseFloat(document.getElementById('cav_sobremetalParedes').value) || 0.3;
+        const sobremetalParedes = numOr('cav_sobremetalParedes', 0.3);
 
         const zPasse = Math.abs(parseFloat(document.getElementById('cav_zPasse').value)) || 2.0;
         const zFinalAbs = Math.abs(parseFloat(document.getElementById('cav_zFinal').value)) || 15.0;
@@ -2103,7 +2197,16 @@
         }
     }
 
+    let _simChave = null;
     function construirTrajetoSimulacao() {
+        const ids = ['f_diam','lin_diam','alivio_diam','furo_diam','cav_acabDiam','cav_fresaDiam','m_diam','c_diamAcab','c_diamDesb','p_T','p_diam','p_Tfuro'];
+        const chave = document.getElementById('codigoGcode').value + '|' + ids.map(i => document.getElementById(i).value).join(',');
+        if (chave === _simChave) return;
+        _simChave = chave;
+        construirTrajetoSimulacaoReal();
+    }
+
+    function construirTrajetoSimulacaoReal() {
         trajetoSimulacaoTotal = [];
         const gcodeText = document.getElementById('codigoGcode').value;
         if (!gcodeText.trim()) return;
@@ -2123,6 +2226,8 @@
         toolDiams[12] = parseFloat(document.getElementById('m_diam').value) || 12;
         toolDiams[16] = parseFloat(document.getElementById('c_diamAcab').value) || 20;
         toolDiams[18] = parseFloat(document.getElementById('c_diamDesb').value) || 32;
+        toolDiams[numOr('p_T', 7)] = numOr('p_diam', 10);
+        toolDiams[numOr('p_Tfuro', 5)] = (listaPeca.find(f => f.func === 'FURO') || { d: 8 }).d;
 
         let lines = gcodeText.split('\n');
         let currentMotion = 'G0';
@@ -2267,186 +2372,80 @@
     }
 
     function desenharSimulador2D(ctx, canvas, brutoX, brutoY) {
-        const margin = 40;
-        const baseScale = Math.min((canvas.width - margin * 2) / brutoX, (canvas.height - margin * 2) / brutoY);
-        const scale = baseScale * simCamZoom;
-        const cX = (canvas.width / 2) + simCamPanX;
-        const cY = (canvas.height / 2) + simCamPanY;
-
-        function toScreen(x, y) {
-            return { x: cX + (x * scale), y: cY - (y * scale) };
-        }
-
-        ctx.strokeStyle = '#181926';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        for (let x = -500; x <= 500; x += 25) {
-            let p1 = toScreen(x, -500); let p2 = toScreen(x, 500);
-            ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
-        }
-        for (let y = -500; y <= 500; y += 25) {
-            let p1 = toScreen(-500, y); let p2 = toScreen(500, y);
-            ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
-        }
-        ctx.stroke();
-
-        let oX = toScreen(0, 0);
-        ctx.strokeStyle = '#3f3f5a';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(oX.x - 20, oX.y); ctx.lineTo(oX.x + 20, oX.y);
-        ctx.moveTo(oX.x, oX.y - 20); ctx.lineTo(oX.x, oX.y + 20);
-        ctx.stroke();
-
-        let bMin = toScreen(-brutoX / 2, brutoY / 2);
-        let bMax = toScreen(brutoX / 2, -brutoY / 2);
-        ctx.strokeStyle = '#ff9900';
-        ctx.shadowColor = 'rgba(255, 153, 0, 0.4)';
-        ctx.shadowBlur = 8;
-        ctx.setLineDash([5, 5]);
-        ctx.strokeRect(bMin.x, bMin.y, Math.abs(bMax.x - bMin.x), Math.abs(bMax.y - bMin.y));
-        ctx.setLineDash([]);
-        ctx.shadowBlur = 0;
-
-        let pontoAtualInfo = obterPontoAtualAnimacao();
-        let limiteIdx = pontoAtualInfo ? pontoAtualInfo.indexLimite : trajetoSimulacaoTotal.length;
-
-        for (let i = 0; i < trajetoSimulacaoTotal.length - 1; i++) {
-            let pt1 = trajetoSimulacaoTotal[i];
-            let pt2 = trajetoSimulacaoTotal[i+1];
-            let p1 = toScreen(pt1.x, pt1.y);
-            let p2 = toScreen(pt2.x, pt2.y);
-
-            let executado = (i <= limiteIdx);
-            ctx.beginPath();
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(p2.x, p2.y);
-
-            if (pt2.tipo === 'G0') {
-                ctx.strokeStyle = executado ? '#ff5555' : 'rgba(255, 85, 85, 0.2)';
-                ctx.lineWidth = 1;
-                ctx.setLineDash([3, 3]);
-            } else {
-                ctx.strokeStyle = executado ? (pt2.tipo === 'G1' ? '#00adb5' : '#a6e3a1') : 'rgba(0, 173, 181, 0.15)';
-                ctx.lineWidth = executado ? 2 : 1;
-                ctx.setLineDash([]);
-            }
-
-            ctx.stroke();
+        const margin = 48;
+        const scale = Math.min((canvas.width - margin * 2) / brutoX, (canvas.height - margin * 2) / brutoY) * simCamZoom;
+        const cX = canvas.width / 2 + simCamPanX, cY = canvas.height / 2 + simCamPanY;
+        const toScreen = (x,y) => ({x:cX+x*scale,y:cY-y*scale});
+        // Grid técnico com passo adaptado à escala.
+        const step = scale > 1.3 ? 25 : 50;
+        ctx.save(); ctx.lineWidth=1; ctx.strokeStyle='rgba(125,160,190,.10)'; ctx.beginPath();
+        for(let x=-500;x<=500;x+=step){let a=toScreen(x,-500),b=toScreen(x,500);ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);}
+        for(let y=-500;y<=500;y+=step){let a=toScreen(-500,y),b=toScreen(500,y);ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);} ctx.stroke();
+        // Bruto com preenchimento e eixo/zero claramente identificados.
+        const a=toScreen(-brutoX/2,brutoY/2), b=toScreen(brutoX/2,-brutoY/2);
+        const grad=ctx.createLinearGradient(a.x,a.y,b.x,b.y);grad.addColorStop(0,'rgba(79,119,148,.22)');grad.addColorStop(1,'rgba(30,54,75,.35)');
+        ctx.fillStyle=grad;ctx.fillRect(a.x,a.y,b.x-a.x,b.y-a.y);ctx.strokeStyle='#e8a34b';ctx.lineWidth=1.5;ctx.setLineDash([]);ctx.strokeRect(a.x,a.y,b.x-a.x,b.y-a.y);
+        ctx.fillStyle='#d3e3ef';ctx.font='11px Segoe UI';ctx.fillText(`BRUTO ${brutoX} × ${brutoY} mm`,a.x+5,a.y-7);
+        const o=toScreen(0,0);ctx.strokeStyle='#ec6b68';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(o.x-9,o.y);ctx.lineTo(o.x+9,o.y);ctx.moveTo(o.x,o.y-9);ctx.lineTo(o.x,o.y+9);ctx.stroke();
+        ctx.fillStyle='#f1a49e';ctx.fillText('X0 Y0',o.x+9,o.y-8);
+        const cur=obterPontoAtualAnimacao(), limit=cur?cur.indexLimite:trajetoSimulacaoTotal.length;
+        for(let i=0;i<trajetoSimulacaoTotal.length-1;i++){
+            const p=trajetoSimulacaoTotal[i],q=trajetoSimulacaoTotal[i+1],s=toScreen(p.x,p.y),t=toScreen(q.x,q.y),done=i<=limit;
+            ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(t.x,t.y);
+            if(q.tipo==='G0'){ctx.strokeStyle=done?'#f16d70':'rgba(241,109,112,.18)';ctx.lineWidth=1;ctx.setLineDash([5,4]);}
+            else {ctx.strokeStyle=done?(q.tipo==='G1'?'#44d5c4':'#a8df91'):'rgba(68,213,196,.18)';ctx.lineWidth=done?2.4:1;ctx.setLineDash([]);} ctx.stroke();
         }
         ctx.setLineDash([]);
-
-        if (pontoAtualInfo) {
-            let posTela = toScreen(pontoAtualInfo.x, pontoAtualInfo.y);
-            let raioFerramentaTela = (pontoAtualInfo.diam / 2) * scale;
-
-            ctx.fillStyle = 'rgba(0, 173, 181, 0.2)';
-            ctx.strokeStyle = '#00adb5';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.arc(posTela.x, posTela.y, Math.max(raioFerramentaTela, 3), 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-
-            ctx.fillStyle = '#ff5555';
-            ctx.beginPath();
-            ctx.arc(posTela.x, posTela.y, 3, 0, Math.PI * 2);
-            ctx.fill();
+        if(cur){const p=toScreen(cur.x,cur.y), r=Math.max(cur.diam/2*scale,5), col=cur.tipo==='G0'?'#ff7478':'#45dbce';
+            ctx.fillStyle=col+'28';ctx.strokeStyle=col;ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fill();ctx.stroke();
+            ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill();
+            ctx.fillStyle='#e6f1fa';ctx.font='11px Segoe UI';ctx.fillText(`T${cur.tool} · Ø${cur.diam.toFixed(1)} mm`,p.x+r+7,p.y-7);
         }
+        ctx.restore();
     }
 
     function desenharSimulador3D(ctx, canvas, bx, by, bz) {
-        const cX = (canvas.width / 2) + simCamPanX;
-        const cY = (canvas.height / 2) + 30 + simCamPanY;
-
-        const baseScale = 0.55 * simCamZoom;
-        const cosZ = Math.cos(simCamRotZ) * baseScale;
-        const sinZ = Math.sin(simCamRotZ) * baseScale;
-        const cosX = Math.cos(simCamRotX);
-        const sinX = Math.sin(simCamRotX);
-
-        function isoProject(x, y, z) {
-            let rx = x * cosZ - y * sinZ;
-            let ry = x * sinZ + y * cosZ;
-            
-            return {
-                x: cX + rx,
-                y: cY + (ry * sinX) - (z * baseScale * cosX)
-            };
+        // Projeção isométrica estável, com escala ajustável pela câmera.
+        const baseScale=Math.min(0.55, (canvas.width*.62)/(bx+by)) * simCamZoom;
+        const cX=canvas.width/2+simCamPanX, cY=canvas.height*.54+simCamPanY;
+        const cz=Math.cos(simCamRotZ), sz=Math.sin(simCamRotZ), cx=Math.cos(simCamRotX), sx=Math.sin(simCamRotX);
+        const P=(x,y,z)=>{const rx=x*cz-y*sz, ry=x*sz+y*cz;return{x:cX+rx*baseScale,y:cY+(ry*sx-z*cx)*baseScale};};
+        const poly=(pts,fill,stroke='#71869a',width=1)=>{ctx.beginPath();pts.forEach((p,i)=>{const q=P(...p);i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y);});ctx.closePath();ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=stroke;ctx.lineWidth=width;ctx.stroke();};
+        const x=bx/2,y=by/2;
+        // Sombra e faces do material para volume e orientação.
+        ctx.save();ctx.globalAlpha=.22;poly([[-x-7,-y-7,-bz-2],[x-7,-y-7,-bz-2],[x-7,y-7,-bz-2],[-x-7,y-7,-bz-2]],'#000','#000',0);ctx.restore();
+        poly([[-x,-y,0],[x,-y,0],[x,-y,-bz],[ -x,-y,-bz]],'#263b4a','#68839a');
+        poly([[x,-y,0],[x,y,0],[x,y,-bz],[x,-y,-bz]],'#1b2d3a','#587286');
+        const topGrad=ctx.createLinearGradient(cX-100,cY-80,cX+100,cY+100);topGrad.addColorStop(0,'#536f80');topGrad.addColorStop(.5,'#354e60');topGrad.addColorStop(1,'#263e50');
+        poly([[-x,-y,0],[x,-y,0],[x,y,0],[-x,y,0]],topGrad,'#e6a44c',1.6);
+        // Marcação discreta da superfície e eixos XYZ.
+        ctx.save();ctx.strokeStyle='rgba(210,230,244,.10)';ctx.lineWidth=.7;
+        for(let gx=-x+25;gx<x;gx+=25){let a=P(gx,-y,0),b=P(gx,y,0);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}
+        for(let gy=-y+25;gy<y;gy+=25){let a=P(-x,gy,0),b=P(x,gy,0);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}ctx.restore();
+        const cur=obterPontoAtualAnimacao(), limit=cur?cur.indexLimite:trajetoSimulacaoTotal.length;
+        for(let i=0;i<trajetoSimulacaoTotal.length-1;i++){
+            const a=trajetoSimulacaoTotal[i],b=trajetoSimulacaoTotal[i+1],p=P(a.x,a.y,a.z),q=P(b.x,b.y,b.z),done=i<=limit;
+            ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);
+            if(b.tipo==='G0'){ctx.strokeStyle=done?'#ff7378':'rgba(255,115,120,.18)';ctx.lineWidth=1.2;ctx.setLineDash([5,4]);}
+            else{ctx.strokeStyle=done?(b.tipo==='G1'?'#43d8c7':'#b3e889'):'rgba(67,216,199,.18)';ctx.lineWidth=done?2.3:1;ctx.setLineDash([]);}ctx.stroke();
+        }ctx.setLineDash([]);
+        if(cur){
+            const tip=P(cur.x,cur.y,cur.z), topZ=Math.max(cur.z+Math.max(22,cur.diam*1.5),18), top=P(cur.x,cur.y,topZ), radius=Math.max(cur.diam*baseScale*.5,4), color=cur.tipo==='G0'?'#ff7a7e':'#f4bb61';
+            // Sombra de contato na peça, haste, porta-ferramenta e fresa helicoidal.
+            const contact=P(cur.x,cur.y,0);ctx.save();ctx.globalAlpha=.24;ctx.fillStyle='#05080b';ctx.beginPath();ctx.ellipse(contact.x,contact.y,radius*1.5,radius*.65,-.2,0,Math.PI*2);ctx.fill();ctx.restore();
+            ctx.strokeStyle='#b8c9d5';ctx.lineWidth=Math.max(radius*1.35,7);ctx.beginPath();ctx.moveTo(top.x,top.y);ctx.lineTo(tip.x,tip.y);ctx.stroke();
+            const holder=P(cur.x,cur.y,topZ+16);ctx.strokeStyle='#8399a9';ctx.lineWidth=Math.max(radius*2.5,11);ctx.beginPath();ctx.moveTo(holder.x,holder.y);ctx.lineTo(top.x,top.y);ctx.stroke();
+            ctx.strokeStyle='#dce8ef';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(holder.x-Math.max(radius,4),holder.y);ctx.lineTo(holder.x+Math.max(radius,4),holder.y);ctx.stroke();
+            // Espiral visual na parte cortante.
+            ctx.strokeStyle=color;ctx.lineWidth=1.6;for(let f=-1;f<=1;f++){ctx.beginPath();ctx.moveTo(tip.x+f*radius*.45,tip.y-4);ctx.lineTo(tip.x+f*radius*.25+radius*.5,tip.y-12);ctx.stroke();}
+            ctx.fillStyle=color;ctx.beginPath();ctx.arc(tip.x,tip.y,Math.max(radius*.38,3),0,Math.PI*2);ctx.fill();
+            ctx.fillStyle='#eaf3f8';ctx.font='11px Segoe UI';ctx.fillText(`T${cur.tool} · Ø${cur.diam.toFixed(1)} mm`,holder.x+12,holder.y-6);
         }
-
-        let p0 = isoProject(-bx/2, -by/2, 0);
-        let p1 = isoProject(bx/2, -by/2, 0);
-        let p2 = isoProject(bx/2, by/2, 0);
-        let p3 = isoProject(-bx/2, by/2, 0);
-
-        let p0B = isoProject(-bx/2, -by/2, -bz);
-        let p1B = isoProject(bx/2, -by/2, -bz);
-        let p2B = isoProject(bx/2, by/2, -bz);
-
-        ctx.fillStyle = '#1e2030';
-        ctx.strokeStyle = '#3a3d58';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.lineTo(p1B.x, p1B.y); ctx.lineTo(p0B.x, p0B.y); ctx.closePath();
-        ctx.fill(); ctx.stroke();
-
-        ctx.fillStyle = '#161725';
-        ctx.beginPath();
-        ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.lineTo(p2B.x, p2B.y); ctx.lineTo(p1B.x, p1B.y); ctx.closePath();
-        ctx.fill(); ctx.stroke();
-
-        ctx.fillStyle = '#2d3047';
-        ctx.strokeStyle = '#ff9900';
-        ctx.lineWidth = 1.8;
-        ctx.beginPath();
-        ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.lineTo(p3.x, p3.y); ctx.closePath();
-        ctx.fill(); ctx.stroke();
-
-        let pontoAtualInfo = obterPontoAtualAnimacao();
-        let limiteIdx = pontoAtualInfo ? pontoAtualInfo.indexLimite : trajetoSimulacaoTotal.length;
-
-        for (let i = 0; i < trajetoSimulacaoTotal.length - 1; i++) {
-            let pt1 = trajetoSimulacaoTotal[i];
-            let pt2 = trajetoSimulacaoTotal[i+1];
-            let p1 = isoProject(pt1.x, pt1.y, pt1.z);
-            let p2 = isoProject(pt2.x, pt2.y, pt2.z);
-
-            let executado = (i <= limiteIdx);
-            ctx.beginPath();
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(p2.x, p2.y);
-
-            if (pt2.tipo === 'G0') {
-                ctx.strokeStyle = executado ? '#ff5555' : 'rgba(255, 85, 85, 0.2)';
-                ctx.lineWidth = 1;
-                ctx.setLineDash([2, 2]);
-            } else {
-                ctx.strokeStyle = executado ? (pt2.tipo === 'G1' ? '#00adb5' : '#a6e3a1') : 'rgba(0, 173, 181, 0.15)';
-                ctx.lineWidth = executado ? 2 : 1;
-                ctx.setLineDash([]);
-            }
-
-            ctx.stroke();
-        }
-        ctx.setLineDash([]);
-
-        if (pontoAtualInfo) {
-            let pos3D = isoProject(pontoAtualInfo.x, pontoAtualInfo.y, pontoAtualInfo.z);
-            let posTopo3D = isoProject(pontoAtualInfo.x, pontoAtualInfo.y, pontoAtualInfo.z + 40);
-
-            ctx.strokeStyle = '#ffb86c';
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.moveTo(pos3D.x, pos3D.y);
-            ctx.lineTo(posTopo3D.x, posTopo3D.y);
-            ctx.stroke();
-
-            ctx.fillStyle = '#ff5555';
-            ctx.beginPath();
-            ctx.arc(pos3D.x, pos3D.y, 4, 0, Math.PI * 2);
-            ctx.fill();
-        }
+        // Tríade XYZ no zero-peça: o G54 padrão do simulador fica no centro do bruto.
+        const origin=P(0,0,0), axisLen=Math.max(18,Math.min(32,Math.min(bx,by)*.22));
+        [['X',P(axisLen,0,0),'#f27b78'],['Y',P(0,axisLen,0),'#76d6a3'],['Z',P(0,0,axisLen),'#78b9ff']].forEach(([label,end,col])=>{ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(origin.x,origin.y);ctx.lineTo(end.x,end.y);ctx.stroke();ctx.fillStyle=col;ctx.font='bold 12px Segoe UI';ctx.fillText(label,end.x+4,end.y-4);});
+        ctx.fillStyle='#f1d18a';ctx.beginPath();ctx.arc(origin.x,origin.y,3,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='#d7e5ee';ctx.font='11px Segoe UI';ctx.fillText(`BRUTO ${bx} × ${by} × ${bz} mm`,12,canvas.height-12);
     }
 
     function vincularEscutasSimulador() {
@@ -2873,6 +2872,19 @@
         atualizarSimulador();
     }
 
+    function numOr(id, padrao) {
+        const v = parseFloat(document.getElementById(id).value);
+        return isNaN(v) ? padrao : v;
+    }
+
+    function validarPassesZ(zPasse, zFinal, elementoNome) {
+        if (!isFinite(zPasse) || zPasse <= 0 || !isFinite(zFinal)) {
+            alert(`ERRO NO ${elementoNome}:\n\nO passe em Z deve ser maior que 0 e a profundidade final deve ser um número válido.`);
+            return false;
+        }
+        return true;
+    }
+
     function validarZAproximacao(zAprox, zInicial, elementoNome) {
         if (parseFloat(zAprox) <= parseFloat(zInicial)) {
             alert(`ERRO DE SEGURANÇA NO ${elementoNome}:\n\nO Z de Segurança (${zAprox} mm) deve ser MAIOR do que o Z Inicial (${zInicial} mm) para evitar colisão!`);
@@ -3087,6 +3099,7 @@
         const zFinalAbs = Math.abs(parseFloat(document.getElementById('c_zFinal').value));
 
         if (!validarZAproximacao(zAprox, zInicial, "CONTORNO")) return null;
+        if (!validarPassesZ(zPasse, zFinalAbs, "CONTORNO")) return null;
 
         let gcode = `(INICIO-DA-TAREFA-CONT.)\n`;
         gcode += `T${numT}M6\n`;
@@ -3103,7 +3116,7 @@
         let pInicialY = quadBottom;
 
         gcode += `G0X${pInicialX.toFixed(2)}Y${pInicialY.toFixed(2)}\n`;
-        gcode += `Z${(zInicial + 1).toFixed(2)}F${avanco}\n`;
+        gcode += `Z${(1 - zInicial).toFixed(2)}F${avanco}\n`;
         gcode += `${oleo}\n`;
         gcode += `G1X${quadLeft.toFixed(2)}\n`;
 
@@ -3148,7 +3161,7 @@
             let aInicialY = aBottom;
 
             gcode += `G0X${aInicialX.toFixed(2)}Y${aInicialY.toFixed(2)}\n`;
-            gcode += `Z${(zInicial + 1).toFixed(2)}F${avancoAcab}\n`;
+            gcode += `Z${(1 - zInicial).toFixed(2)}F${avancoAcab}\n`;
             gcode += `${oleo}\n`;
             gcode += `G1X${aLeft.toFixed(2)}\n`;
 
@@ -3209,6 +3222,7 @@
         const zFinalAbs = Math.abs(parseFloat(document.getElementById('m_zFinal').value));
 
         if (!validarZAproximacao(zAprox, zInicial, "MATRIZ DE ILHAS")) return null;
+        if (!validarPassesZ(zPasse, zFinalAbs, "MATRIZ DE ILHAS")) return null;
 
         let gcode = `(INICIO-DA-TAREFA-MATRIZ-ILHAS)\n`;
         gcode += `T${numT}M6\n`;
@@ -3358,14 +3372,17 @@
             gcode += `${oleo}\n`;
 
             let primeiro = true;
+            let rpmAtual = refInfo.rpm;
             furosDoGrupo.forEach(furo => {
+                const ciclo = `G83Z-${furo.zFinal.toFixed(2)}R${zAprox.toFixed(1)}Q${furo.qPasse.toFixed(2)}F${furo.avanco}`;
                 if (primeiro) {
                     gcode += `G0X${furo.x.toFixed(2)}Y${furo.y.toFixed(2)}\n`;
                     gcode += `G0Z${zAprox.toFixed(1)}\n`;
-                    gcode += `G83Z-${furo.zFinal.toFixed(2)}R${zAprox.toFixed(1)}Q${furo.qPasse.toFixed(2)}F${furo.avanco}\n`;
+                    gcode += `${ciclo}\n`;
                     primeiro = false;
                 } else {
-                    gcode += `X${furo.x.toFixed(2)}Y${furo.y.toFixed(2)}\n`;
+                    if (furo.rpm !== rpmAtual) { gcode += `S${furo.rpm}\n`; rpmAtual = furo.rpm; }
+                    gcode += `${ciclo}X${furo.x.toFixed(2)}Y${furo.y.toFixed(2)}\n`;
                 }
             });
 
@@ -3436,6 +3453,7 @@
 
                     gcode += `G0X${pontoMergulhoX.toFixed(2)}Y${pontoMergulhoY.toFixed(2)}\n`;
                     gcode += `G0Z${cav.zAprox.toFixed(1)}\n`;
+                    if (zAtual > cav.zInicial) gcode += `G0Z${(1 - zAtual).toFixed(2)}\n`;
                     gcode += `G1Z-${zProximo.toFixed(2)}F${cav.fresaAvanco}\n`;
 
                     if (cav.formato === 'CIRCULAR') {
@@ -3482,10 +3500,10 @@
                             if (currMaxY > maxBoundaryY) currMaxY = maxBoundaryY;
 
                             gcode += `G1X${currMaxX.toFixed(2)}Y${currMinY.toFixed(2)}\n`;
-                            gcode += `Y${currMaxY.toFixed(2)}\n`;
                             gcode += `X${currMinX.toFixed(2)}\n`;
-                            gcode += `Y${currMinY.toFixed(2)}\n`;
+                            gcode += `Y${currMaxY.toFixed(2)}\n`;
                             gcode += `X${currMaxX.toFixed(2)}\n`;
+                            gcode += `Y${currMinY.toFixed(2)}\n`;
 
                             if (currMinX === minBoundaryX && currMaxX === maxBoundaryX &&
                                 currMinY === minBoundaryY && currMaxY === maxBoundaryY) {
@@ -3521,6 +3539,7 @@
 
                         gcode += `G0X${pontoMergulhoX.toFixed(2)}Y${pontoMergulhoY.toFixed(2)}\n`;
                         gcode += `G0Z${cav.zAprox.toFixed(1)}\n`;
+                        if (zAtual > cav.zInicial) gcode += `G0Z${(1 - zAtual).toFixed(2)}\n`;
                         gcode += `G1Z-${zProximo.toFixed(2)}F${cav.acabAvanco}\n`;
 
                         if (cav.formato === 'CIRCULAR') {
@@ -3538,10 +3557,10 @@
                             let contornoMaxY = centro.y + (cav.dimY / 2) - (cav.acabDiam / 2);
 
                             gcode += `G1X${contornoMaxX.toFixed(2)}Y${contornoMinY.toFixed(2)}\n`;
-                            gcode += `Y${contornoMaxY.toFixed(2)}\n`;
                             gcode += `X${contornoMinX.toFixed(2)}\n`;
-                            gcode += `Y${contornoMinY.toFixed(2)}\n`;
+                            gcode += `Y${contornoMaxY.toFixed(2)}\n`;
                             gcode += `X${contornoMaxX.toFixed(2)}\n`;
+                            gcode += `Y${contornoMinY.toFixed(2)}\n`;
                         }
 
                         gcode += `G0Z${cav.zAprox.toFixed(1)}\n`;
@@ -3627,7 +3646,8 @@
         const useM01 = document.getElementById('multi_useM01').checked;
 
         let gcode = `%\(Gerador Integrado G-Code CNC)\n`;
-        gcode += `#24=${zeroPeca.replace('G', '')}(PONTO.ZERO)\n\n`;
+        gcode += `#24=${zeroPeca.replace('G', '')}(PONTO.ZERO)\n`;
+        gcode += `${zeroPeca}G90G21G17G40G49G80\n\n`;
 
         for (let task of ordemTarefas) {
             if (!task.checked) continue;
@@ -3645,11 +3665,16 @@
                 bloco = obterBlocoCavidade(zeroPeca, oleo, useM01);
             } else if (task.id === 'linear') {
                 bloco = obterBlocoLinear(zeroPeca, oleo, useM01);
+            } else if (task.id === 'peca') {
+                bloco = obterBlocoPeca(oleo, useM01);
             }
 
             if (bloco === null) return;
             gcode += bloco;
         }
+
+        gcode += `G49\n`;
+        gcode += `G53Y0\n`;
         gcode += `M30\n%`;
 
         document.getElementById('codigoGcode').value = gcode;
@@ -3711,9 +3736,19 @@
             return false;
         }
 
-        if (diam > canal) {
+        const sobremetalV = parseFloat(document.getElementById('m_sobremetal').value) || 0;
+        const canalMinimo = diam + 2 * sobremetalV;
+        if (canalMinimo > canal) {
             statusBox.className = "status-box error";
-            statusBox.innerHTML = `ERRO: Diâmetro da fresa (${diam} mm) > canal (${canal} mm)! A ferramenta colidirá com as ilhas.`;
+            statusBox.innerHTML = `ERRO: Canal (${canal} mm) menor que o mínimo (${canalMinimo.toFixed(2)} mm = fresa Ø${diam} + 2 × sobremetal ${sobremetalV}). A ferramenta colidirá com as ilhas.`;
+            if (btn) btn.disabled = true;
+            return false;
+        }
+
+        const diamAcabV = parseFloat(document.getElementById('m_diamAcab').value) || 0;
+        if (document.getElementById('m_execAcab').value === 'SIM' && diamAcabV > canal) {
+            statusBox.className = "status-box error";
+            statusBox.innerHTML = `ERRO: Fresa de acabamento Ø${diamAcabV} mm > canal (${canal} mm)! A ferramenta colidirá com as ilhas.`;
             if (btn) btn.disabled = true;
             return false;
         }
@@ -3899,7 +3934,484 @@
         link.click();
     }
 
+    // --- ABA 7: PEÇA (formas, DXF e usinagem) ---
+    let listaPeca = [];
+    const f2 = v => v.toFixed(3);
+
+    function pecaCampos() {
+        const t = document.getElementById('p_tipo').value;
+        document.getElementById('p_g_ret').style.display = t === 'RET' ? '' : 'none';
+        document.getElementById('p_g_circ').style.display = t === 'CIRC' ? '' : 'none';
+        document.getElementById('p_g_poli').style.display = t === 'POLI' ? '' : 'none';
+    }
+
+    function pecaAreaS(P) {
+        let a = 0;
+        for (let i = 0; i < P.length; i++) { const q = P[(i + 1) % P.length]; a += P[i].x * q.y - q.x * P[i].y; }
+        return a / 2;
+    }
+
+    function pecaPoli(f) {
+        let P;
+        if (f.tipo === 'RET') {
+            const x = f.dx / 2, y = f.dy / 2;
+            P = [{x: f.cx - x, y: f.cy - y}, {x: f.cx + x, y: f.cy - y}, {x: f.cx + x, y: f.cy + y}, {x: f.cx - x, y: f.cy + y}];
+        } else if (f.tipo === 'CIRC') {
+            const R = f.d / 2, n = Math.min(360, Math.max(24, Math.ceil(Math.PI / Math.acos(Math.max(0, 1 - 0.01 / R)))));
+            P = [];
+            for (let i = 0; i < n; i++) { const a = 2 * Math.PI * i / n; P.push({x: f.cx + R * Math.cos(a), y: f.cy + R * Math.sin(a)}); }
+        } else {
+            P = f.pts.map(p => ({x: p.x + f.cx, y: p.y + f.cy}));
+        }
+        P = P.filter((p, i) => { const q = P[(i + 1) % P.length]; return Math.hypot(p.x - q.x, p.y - q.y) > 1e-6; });
+        return pecaAreaS(P) < 0 ? P.slice().reverse() : P;
+    }
+
+    // offset por mitra: d > 0 para fora, d < 0 para dentro (polígono em sentido anti-horário)
+    function pecaOff(P, d) {
+        const n = P.length, out = [];
+        const nr = (a, b) => { const l = Math.hypot(b.x - a.x, b.y - a.y); return {x: (b.y - a.y) / l, y: -(b.x - a.x) / l}; };
+        for (let i = 0; i < n; i++) {
+            const a = P[(i + n - 1) % n], b = P[i], c = P[(i + 1) % n];
+            const n1 = nr(a, b), n2 = nr(b, c), k = 1 + n1.x * n2.x + n1.y * n2.y;
+            out.push(k < 1e-6 ? {x: b.x + d * n1.x, y: b.y + d * n1.y}
+                              : {x: b.x + d * (n1.x + n2.x) / k, y: b.y + d * (n1.y + n2.y) / k});
+        }
+        return out;
+    }
+
+    function pecaValida(A, B) {
+        if (pecaAreaS(B) <= 1e-6) return false;
+        for (let i = 0; i < A.length; i++) {
+            const a = A[i], a2 = A[(i + 1) % A.length], b = B[i], b2 = B[(i + 1) % B.length];
+            if ((a2.x - a.x) * (b2.x - b.x) + (a2.y - a.y) * (b2.y - b.y) <= 0) return false;
+        }
+        return true;
+    }
+
+    function pecaConvexo(P) {
+        const n = P.length;
+        for (let i = 0; i < n; i++) {
+            const a = P[i], b = P[(i + 1) % n], c = P[(i + 2) % n];
+            if ((b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x) < -1e-9) return false;
+        }
+        return true;
+    }
+
+    // linhas de varredura dentro de P, em zigue-zague
+    function pecaRaster(P, passo) {
+        const ys = P.map(p => p.y), ymin = Math.min(...ys), ymax = Math.max(...ys), out = [];
+        let linhas = [];
+        for (let y = ymin; y < ymax; y += passo) linhas.push(y);
+        linhas.push(ymax);
+        linhas.forEach((y0, idx) => {
+            const y = Math.min(Math.max(y0, ymin + 1e-4), ymax - 1e-4), xs = [];
+            for (let i = 0; i < P.length; i++) {
+                const a = P[i], b = P[(i + 1) % P.length];
+                if ((a.y <= y && b.y > y) || (b.y <= y && a.y > y)) xs.push(a.x + (y - a.y) * (b.x - a.x) / (b.y - a.y));
+            }
+            xs.sort((p, q) => p - q);
+            let segs = [];
+            for (let k = 0; k + 1 < xs.length; k += 2) segs.push([{x: xs[k], y}, {x: xs[k + 1], y}]);
+            if (idx % 2) segs = segs.reverse().map(s => [s[1], s[0]]);
+            out.push(...segs);
+        });
+        return out;
+    }
+
+    // percorre o laço fechado P descendo de z0 a z1 (profundidades positivas) em rampa
+    function pecaLaco(P, z0, z1) {
+        const n = P.length;
+        let L = 0, c = 0, s = '';
+        for (let i = 0; i < n; i++) L += Math.hypot(P[(i + 1) % n].x - P[i].x, P[(i + 1) % n].y - P[i].y);
+        for (let i = 1; i <= n; i++) {
+            const a = P[i - 1], b = P[i % n];
+            c += Math.hypot(b.x - a.x, b.y - a.y);
+            s += `G1X${f2(b.x)}Y${f2(b.y)}Z-${f2(z0 + (z1 - z0) * c / L)}\n`;
+        }
+        return s;
+    }
+
+    // ---- trajetória da ferramenta: linha de passagem, ponto de início e recuo de entrada ----
+    // deslocamento do centro da fresa em relação à linha: >0 por fora, 0 centro na linha, <0 por dentro
+    function pecaDesl(f, r) {
+        const t = f.traj || 'AUTO';
+        if (t === 'CENTRO') return 0;
+        if (t === 'INT') return -r;
+        if (t === 'EXT') return r;
+        return f.func === 'EXT' ? r : -r;
+    }
+
+    // reordena o laço P para começar no ponto do laço mais próximo de (x, y)
+    function pecaIniciar(P, x, y) {
+        const n = P.length;
+        let best = Infinity, bi = 0, bt = 0, bq = P[0];
+        for (let i = 0; i < n; i++) {
+            const a = P[i], b = P[(i + 1) % n], dx = b.x - a.x, dy = b.y - a.y, l2 = dx * dx + dy * dy;
+            const t = l2 > 0 ? Math.max(0, Math.min(1, ((x - a.x) * dx + (y - a.y) * dy) / l2)) : 0;
+            const q = {x: a.x + t * dx, y: a.y + t * dy}, d = Math.hypot(x - q.x, y - q.y);
+            if (d < best - 1e-9) { best = d; bi = i; bt = t; bq = q; }
+        }
+        const rot = k => { const o = []; for (let i = 0; i < n; i++) o.push(P[(k + i) % n]); return o; };
+        if (bt < 1e-9) return rot(bi);
+        if (bt > 1 - 1e-9) return rot((bi + 1) % n);
+        return [bq].concat(rot((bi + 1) % n));
+    }
+
+    function pecaDentro(P, p) {
+        let d = false;
+        for (let i = 0, j = P.length - 1; i < P.length; j = i++) {
+            if ((P[i].y > p.y) !== (P[j].y > p.y) &&
+                p.x < (P[j].x - P[i].x) * (p.y - P[i].y) / (P[j].y - P[i].y) + P[i].x) d = !d;
+        }
+        if (d) return true;
+        // ponto sobre a borda também conta como dentro
+        for (let i = 0; i < P.length; i++) {
+            const a = P[i], b = P[(i + 1) % P.length], dx = b.x - a.x, dy = b.y - a.y, l2 = dx * dx + dy * dy;
+            const t = l2 > 0 ? Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / l2)) : 0;
+            if (Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy)) < 1e-6) return true;
+        }
+        return false;
+    }
+
+    // devolve { P: laço deslocado, L: laço de passagem (já iniciado no ponto escolhido), E: ponto de entrada, bolso }
+    function pecaTraj(f, r, recGX, recGY) {
+        const P0 = pecaPoli(f), d = pecaDesl(f, r);
+        const P = d === 0 ? P0.slice() : pecaOff(P0, d);
+        if (d < 0 && !pecaValida(P0, P)) return { erro: `a fresa Ø${(2 * r).toFixed(1)} mm é grande demais para passar por dentro desta linha.` };
+        const bolso = f.func === 'CAV' && d < 0;      // cavidade com a fresa por dentro: desbaste + acabamento
+        let L = bolso ? P.slice().reverse() : P;
+        if (f.iniX != null && f.iniY != null) L = pecaIniciar(L, f.iniX, f.iniY);
+        const xs = P0.map(p => p.x), ys = P0.map(p => p.y);
+        const cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+        const sg = v => Math.abs(v) < 1e-6 ? 1 : Math.sign(v);
+        let sx = sg(L[0].x - cx), sy = sg(L[0].y - cy);
+        if (f.func === 'CAV') { sx = -sx; sy = -sy; }
+        const rx = f.recX != null ? f.recX : recGX, ry = f.recY != null ? f.recY : recGY;
+        const E = { x: L[0].x + sx * rx, y: L[0].y + sy * ry };
+        if (bolso && (Math.abs(rx) > 1e-9 || Math.abs(ry) > 1e-9) && !pecaDentro(P, E))
+            return { erro: 'o recuo de entrada leva a ferramenta para fora da área da cavidade.' };
+        return { P, L, E, bolso, d };
+    }
+
+    function obterBlocoPeca(oleo, useM01) {
+        if (listaPeca.length === 0) { alert("A peça está vazia! Adicione ou importe formas na Aba 7."); return null; }
+        const T = numOr('p_T', 7), D = numOr('p_diam', 10), rpm = numOr('p_rpm', 2500), av = numOr('p_avanco', 800);
+        const zA = numOr('p_zAprox', 5), zP = Math.abs(numOr('p_zPasse', 2)), zF = Math.abs(numOr('p_zFinal', 10)), r = D / 2;
+        const gx = numOr('p_recX', 0), gy = numOr('p_recY', 0);
+        if (!(D > 0) || !validarZAproximacao(zA, 0, "PEÇA") || !validarPassesZ(zP, zF, "PEÇA")) return null;
+
+        let g = `(INICIO-DA-TAREFA-PECA)\n`;
+        const furos = listaPeca.filter(f => f.func === 'FURO' && f.usar !== false);
+        if (furos.length) {
+            const Tf = numOr('p_Tfuro', 5), rf = numOr('p_rpmFuro', 1800), af = numOr('p_avFuro', 220), qf = numOr('p_qFuro', 3);
+            g += `(FUROS-DA-PECA)\nT${Tf}M6\n${useM01 ? 'M01\n' : ''}G43H${Tf}G0Z150\nS${rf}M3\n${oleo}\n`;
+            furos.forEach(f => {
+                g += `G0X${f2(f.cx)}Y${f2(f.cy)}\nG0Z${zA.toFixed(1)}\nG83Z-${zF.toFixed(2)}R${zA.toFixed(1)}Q${qf.toFixed(2)}F${af}\n`;
+            });
+            g += `G80\nG0Z150\nM05M9\n\n`;
+        }
+
+        const fresar = listaPeca.filter(f => f.func !== 'FURO' && f.usar !== false).sort((a, b) => (a.func === 'EXT') - (b.func === 'EXT'));
+        if (fresar.length) {
+            g += `(FRESAMENTO-DA-PECA)\nT${T}M6\n${useM01 ? 'M01\n' : ''}G43H${T}G0Z150\nS${rpm}M3\n${oleo}\n`;
+            for (const f of fresar) {
+                const tr = pecaTraj(f, r, gx, gy);
+                if (tr.erro) { alert(`ERRO na forma #${listaPeca.indexOf(f) + 1}: ${tr.erro}`); return null; }
+                const { P, L, E, bolso } = tr;
+                const mover = Math.hypot(E.x - L[0].x, E.y - L[0].y) > 1e-6;
+                const ir = mover ? `G1X${f2(L[0].x)}Y${f2(L[0].y)}\n` : '';
+                const sair = mover ? `G1X${f2(E.x)}Y${f2(E.y)}\n` : '';
+                if (!bolso) {
+                    g += `(${f.func === 'EXT' ? 'CONTORNO-EXTERNO' : 'CONTORNO-CAVIDADE'})\nG0X${f2(E.x)}Y${f2(E.y)}\nG0Z${zA.toFixed(1)}\nG1Z0F${av / 2}\nG1F${av}\n${ir}`;
+                    let z = 0;
+                    while (z < zF - 1e-9) { const z1 = Math.min(z + zP, zF); g += pecaLaco(L, z, z1); z = z1; }
+                    g += pecaLaco(L, zF, zF) + sair + `G0Z${zA.toFixed(1)}\n`;
+                } else {
+                    const conv = pecaConvexo(P), segs = pecaRaster(P, D * 0.6);
+                    g += `(CAVIDADE)\n`;
+                    let z = 0;
+                    while (z < zF - 1e-9) {
+                        const z1 = Math.min(z + zP, zF), zi = z;
+                        const ent = (x, y) => `G0Z${zA.toFixed(1)}\nG0X${f2(x)}Y${f2(y)}\nG0Z${f2(1 - zi)}\nG1Z-${f2(z1)}F${av / 2}\nG1F${av}\n`;
+                        segs.forEach((s, k) => {
+                            g += (k === 0 || !conv) ? ent(s[0].x, s[0].y) : `G1X${f2(s[0].x)}Y${f2(s[0].y)}\n`;
+                            g += `G1X${f2(s[1].x)}Y${f2(s[1].y)}\n`;
+                        });
+                        g += ent(E.x, E.y) + ir + pecaLaco(L, z1, z1) + sair + `G0Z${zA.toFixed(1)}\n`;
+                        z = z1;
+                    }
+                }
+            }
+            g += `G0Z150\nM05M9\n\n`;
+        }
+        return g;
+    }
+
+    function adicionarFormaPeca() {
+        const tipo = document.getElementById('p_tipo').value, func = document.getElementById('p_func').value;
+        const f = { tipo, func, cx: numOr('p_cx', 0), cy: numOr('p_cy', 0) };
+        if (func === 'FURO' && tipo !== 'CIRC') { alert("Furo (G83) só aceita forma circular."); return; }
+        if (tipo === 'RET') {
+            f.dx = numOr('p_dx', 100); f.dy = numOr('p_dy', 60);
+            if (!(f.dx > 0 && f.dy > 0)) { alert("Informe dimensões maiores que 0."); return; }
+        } else if (tipo === 'CIRC') {
+            f.d = numOr('p_d', 20);
+            if (!(f.d > 0)) { alert("Informe um diâmetro maior que 0."); return; }
+        } else {
+            f.pts = document.getElementById('p_pts').value.split('\n').map(l => l.trim().split(/[,;\s]+/).map(parseFloat)).filter(a => a.length >= 2 && !isNaN(a[0]) && !isNaN(a[1])).map(a => ({x: a[0], y: a[1]}));
+            if (f.pts.length < 3) { alert("O polígono precisa de pelo menos 3 pontos."); return; }
+        }
+        listaPeca.push(f);
+        renderizarPeca();
+    }
+
+    function obterLimitesPeca() {
+        if (!listaPeca.length) return null;
+        const pontos = [];
+        listaPeca.forEach(f => {
+            if (f.tipo === 'CIRC') {
+                const r = f.d / 2;
+                pontos.push({x:f.cx-r,y:f.cy-r},{x:f.cx+r,y:f.cy+r});
+            } else {
+                pontos.push(...pecaPoli(f));
+            }
+        });
+        if (!pontos.length) return null;
+        const xs=pontos.map(p=>p.x), ys=pontos.map(p=>p.y);
+        const minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
+        return {minX,maxX,minY,maxY,largura:maxX-minX,altura:maxY-minY,centroX:(minX+maxX)/2,centroY:(minY+maxY)/2};
+    }
+
+    function centralizarPecaNoZero() {
+        const b=obterLimitesPeca();
+        if (!b) return;
+        // Translaciona todas as entidades sem alterar dimensões, orientação ou parâmetros de usinagem.
+        listaPeca.forEach(f => { f.cx -= b.centroX; f.cy -= b.centroY; });
+        renderizarPeca();
+    }
+
+    function atualizarInfoDimensoesPeca() {
+        const box=document.getElementById('p_dxf_info'), btn=document.getElementById('btnCentralizarPeca');
+        if (!box || !btn) return;
+        const b=obterLimitesPeca();
+        btn.disabled=!b;
+        if (!b) { box.innerHTML='Dimensões da peça: importe ou desenhe formas para calcular os limites em X e Y.'; return; }
+        box.innerHTML=`<strong>Envelope total da peça (mm)</strong><br>Comprimento X: <strong>${b.largura.toFixed(2)} mm</strong> &nbsp;·&nbsp; Largura Y: <strong>${b.altura.toFixed(2)} mm</strong><br>Limites atuais: X ${b.minX.toFixed(2)} a ${b.maxX.toFixed(2)} &nbsp;|&nbsp; Y ${b.minY.toFixed(2)} a ${b.maxY.toFixed(2)}<br>Centro do envelope: X ${b.centroX.toFixed(2)} · Y ${b.centroY.toFixed(2)} mm`;
+    }
+
+    function importarDXF(ev) {
+        const arq = ev.target.files[0];
+        if (!arq) return;
+        const rd = new FileReader();
+        rd.onload = () => {
+            const L = rd.result.split(/\r?\n/).map(s => s.trim()), E = [];
+            let cur = null, bulge = false;
+            for (let i = 0; i + 1 < L.length; i += 2) {
+                const c = parseInt(L[i]), v = L[i + 1];
+                if (c === 0) { cur = {t: v, p: [], r: 0, fl: 0}; E.push(cur); continue; }
+                if (!cur) continue;
+                if (c === 10 || c === 11) cur.p.push({x: +v, y: 0});
+                else if ((c === 20 || c === 21) && cur.p.length) cur.p[cur.p.length - 1].y = +v;
+                else if (c === 40) cur.r = +v;
+                else if (c === 50) cur.a1 = +v;
+                else if (c === 51) cur.a2 = +v;
+                else if (c === 70) cur.fl = +v;
+                else if (c === 42 && +v) bulge = true;
+            }
+            const novas = [], segs = [], segsPL = [];
+            E.forEach(e => {
+                if (e.t === 'CIRCLE' && e.p[0] && e.r > 0) novas.push({tipo: 'CIRC', cx: e.p[0].x, cy: e.p[0].y, d: 2 * e.r});
+                else if (e.t === 'ARC' && e.p[0] && e.r > 0 && e.a1 != null && e.a2 != null) {
+                    // arco (sentido anti-horário de a1 a a2) dividido em pequenos segmentos
+                    let varre = e.a2 - e.a1;
+                    if (varre <= 0) varre += 360;
+                    const passo = 2 * Math.acos(Math.max(0, 1 - 0.01 / e.r)) * 180 / Math.PI;
+                    const n = Math.max(2, Math.ceil(varre / Math.max(passo, 1)));
+                    let ant = null;
+                    for (let k = 0; k <= n; k++) {
+                        const ang = (e.a1 + varre * k / n) * Math.PI / 180;
+                        const q = {x: e.p[0].x + e.r * Math.cos(ang), y: e.p[0].y + e.r * Math.sin(ang)};
+                        if (ant) segs.push([ant, q]);
+                        ant = q;
+                    }
+                }
+                else if (e.t === 'LWPOLYLINE' && e.p.length >= 3 && (e.fl & 1)) novas.push({tipo: 'POLI', cx: 0, cy: 0, pts: e.p});
+                else if (e.t === 'LINE') for (let k = 0; k + 1 < e.p.length; k++) segs.push([e.p[k], e.p[k + 1]]);
+                else if (e.t === 'LWPOLYLINE') for (let k = 0; k + 1 < e.p.length; k++) segsPL.push([e.p[k], e.p[k + 1]]);
+            });
+            // polilinhas abertas (cotas, por exemplo) entram por último: ARC e LINE têm prioridade na junção
+            segs.push(...segsPL);
+            const ig = (a, b) => Math.hypot(a.x - b.x, a.y - b.y) < 0.01;
+            while (segs.length) {
+                const s0 = segs.shift(), ch = [s0[0], s0[1]];
+                let ok = true;
+                while (ok) {
+                    ok = false;
+                    for (let k = 0; k < segs.length; k++) {
+                        const [a, b] = segs[k], fim = ch[ch.length - 1];
+                        if (ig(a, fim)) { ch.push(b); segs.splice(k, 1); ok = true; break; }
+                        if (ig(b, fim)) { ch.push(a); segs.splice(k, 1); ok = true; break; }
+                    }
+                }
+                // se não fechou, tenta também estender pelo começo da cadeia
+                ok = !ig(ch[0], ch[ch.length - 1]);
+                while (ok) {
+                    ok = false;
+                    for (let k = 0; k < segs.length; k++) {
+                        const [a, b] = segs[k], ini = ch[0];
+                        if (ig(a, ini)) { ch.unshift(b); segs.splice(k, 1); ok = true; break; }
+                        if (ig(b, ini)) { ch.unshift(a); segs.splice(k, 1); ok = true; break; }
+                    }
+                }
+                if (ch.length >= 4 && ig(ch[0], ch[ch.length - 1])) novas.push({tipo: 'POLI', cx: 0, cy: 0, pts: ch.slice(0, -1)});
+            }
+            let maior = null, am = 0;
+            novas.filter(f => f.tipo === 'POLI').forEach(f => { const a = Math.abs(pecaAreaS(f.pts)); if (a > am) { am = a; maior = f; } });
+            novas.forEach(f => { f.func = f === maior ? 'EXT' : (f.tipo === 'CIRC' && f.d <= 25 ? 'FURO' : 'CAV'); });
+            listaPeca.push(...novas);
+            renderizarPeca();
+            alert(novas.length ? `${novas.length} forma(s) importada(s). Confira a função de cada uma na tabela.` + (bulge ? '\nAviso: arcos (bulge) de polilinhas foram tratados como retas.' : '') + '\nContornos abertos (cotas, textos) são ignorados.'
+                               : "Nenhuma forma reconhecida. Use LWPOLYLINE fechada, CIRCLE ou LINE/ARC encadeados formando um contorno fechado.");
+        };
+        rd.readAsText(arq);
+        ev.target.value = '';
+    }
+
+    function pecaSet(i, k, v, num) {
+        const f = listaPeca[i];
+        if (!f) return;
+        if (num) { const n = parseFloat(v); f[k] = isNaN(n) ? null : n; }
+        else f[k] = v;
+        desenharPeca();
+    }
+
+    function atualizarFerramentasPeca() {
+        const bloco=document.getElementById('blocoBrocaPeca');
+        if (!bloco) return;
+        bloco.style.display=listaPeca.some(f=>f.func==='FURO' && f.usar!==false) ? 'block' : 'none';
+    }
+
+    function pecaCliqueCanvas(event) {
+        const cv=document.getElementById('pecaCanvas');
+        if (!cv || !listaPeca.length) return;
+        const rect=cv.getBoundingClientRect(), sx=cv.width/rect.width, sy=cv.height/rect.height;
+        const mx=(event.clientX-rect.left)*sx, my=(event.clientY-rect.top)*sy;
+        const r=Math.max(numOr('p_diam',10)/2,0.01), gx=numOr('p_recX',0), gy=numOr('p_recY',0);
+        const points=[];
+        listaPeca.forEach(f=>{ if(f.func==='FURO') points.push({x:f.cx-f.d/2,y:f.cy-f.d/2},{x:f.cx+f.d/2,y:f.cy+f.d/2}); else points.push(...pecaPoli(f)); });
+        if(!points.length) return;
+        const xs=points.map(p=>p.x),ys=points.map(p=>p.y),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
+        const esc=Math.min((cv.width-40)/((x1-x0)||1),(cv.height-40)/((y1-y0)||1));
+        const tx=x=>(cv.width-(x1-x0)*esc)/2+(x-x0)*esc, ty=y=>cv.height-(cv.height-(y1-y0)*esc)/2-(y-y0)*esc;
+        const distSegment=(p,a,b)=>{const dx=b.x-a.x,dy=b.y-a.y,l2=dx*dx+dy*dy,t=l2?Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/l2)):0;return Math.hypot(p.x-a.x-t*dx,p.y-a.y-t*dy);};
+        const click={x:mx,y:my}; let best={d:Infinity,i:-1,mode:''};
+        listaPeca.forEach((f,i)=>{
+            if(f.func==='FURO') return;
+            const base=pecaPoli(f), candidates=[{mode:'CENTRO',p:base}];
+            try { candidates.push({mode:'INT',p:pecaOff(base,-r)},{mode:'EXT',p:pecaOff(base,r)}); } catch(_) {}
+            candidates.forEach(candidate=>{
+                const path=candidate.p;
+                for(let k=0;k<path.length;k++){
+                    const a={x:tx(path[k].x),y:ty(path[k].y)}, q=path[(k+1)%path.length], b={x:tx(q.x),y:ty(q.y)};
+                    const d=distSegment(click,a,b);
+                    if(d<best.d) best={d,i,mode:candidate.mode};
+                }
+            });
+        });
+        if(best.i<0 || best.d>18) return;
+        listaPeca[best.i].traj=best.mode;
+        renderizarPeca();
+        const nome={CENTRO:'centro na linha',INT:'borda por dentro',EXT:'borda por fora'}[best.mode];
+        const trs=document.querySelectorAll('#corpoTabelaPeca select');
+        // A seleção já foi aplicada ao objeto; renderizarPeca atualiza o seletor correspondente.
+        cv.title=`Forma ${best.i+1}: linha da ferramenta ${nome}`;
+    }
+
+    function renderizarPeca() {
+        atualizarInfoDimensoesPeca();
+        atualizarFerramentasPeca();
+        const tb = document.getElementById('corpoTabelaPeca');
+        tb.innerHTML = listaPeca.length ? '' : '<tr><td colspan="5" style="color:#888;">Nenhuma forma cadastrada.</td></tr>';
+        const nomes = {EXT: 'Contorno externo', CAV: 'Cavidade', FURO: 'Furo (G83)'};
+        const trajs = {AUTO: 'Automática', CENTRO: 'Centro na linha', INT: 'Borda por dentro', EXT: 'Borda por fora'};
+        listaPeca.forEach((f, i) => {
+            const dados = f.tipo === 'RET' ? `${f.dx}x${f.dy} @ (${f.cx}, ${f.cy})` : f.tipo === 'CIRC' ? `Ø${f.d.toFixed(2)} @ (${f.cx}, ${f.cy})` : `${f.pts.length} pontos`;
+            const opts = ['EXT', 'CAV'].concat(f.tipo === 'CIRC' ? ['FURO'] : []).map(o => `<option value="${o}" ${o === f.func ? 'selected' : ''}>${nomes[o]}</option>`).join('');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${i + 1}</td><td>${f.tipo}</td><td><select onchange="listaPeca[${i}].func=this.value;renderizarPeca()">${opts}</select></td><td>${dados}</td><td><button class="btn-del" onclick="listaPeca.splice(${i},1);renderizarPeca()">X</button></td>`;
+            tb.appendChild(tr);
+
+            const num = (k, ph) => `<input type="number" step="0.1" placeholder="${ph}" style="width:72px;" value="${f[k] != null ? f[k] : ''}" onchange="pecaSet(${i},'${k}',this.value,true)">`;
+            const optT = Object.keys(trajs).map(k => `<option value="${k}" ${(f.traj || 'AUTO') === k ? 'selected' : ''}>${trajs[k]}</option>`).join('');
+            const lb = 'style="display:flex;flex-direction:column;gap:2px;"';
+            const extra = f.func === 'FURO' ? '' : `
+                <label ${lb}>Linha da ferramenta<select onchange="pecaSet(${i},'traj',this.value)">${optT}</select></label>
+                <label ${lb}>Início X${num('iniX', 'auto')}</label>
+                <label ${lb}>Início Y${num('iniY', 'auto')}</label>
+                <label ${lb}>Recuo X${num('recX', 'padrão')}</label>
+                <label ${lb}>Recuo Y${num('recY', 'padrão')}</label>`;
+            const tr2 = document.createElement('tr');
+            tr2.innerHTML = `<td></td><td colspan="4"><div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;font-size:0.72rem;color:#aaa;">
+                <label style="display:flex;align-items:center;gap:4px;"><input type="checkbox" style="width:auto;" ${f.usar !== false ? 'checked' : ''} onchange="pecaSet(${i},'usar',this.checked)"> Usinar</label>${extra}
+                </div></td>`;
+            tb.appendChild(tr2);
+        });
+        desenharPeca();
+    }
+
+    function desenharPeca() {
+        const cv = document.getElementById('pecaCanvas');
+        if (!cv) return;
+        const c = cv.getContext('2d'), W = cv.width, H = cv.height;
+        c.clearRect(0, 0, W, H);
+        const r = numOr('p_diam', 10) / 2, gx = numOr('p_recX', 0), gy = numOr('p_recY', 0);
+        const trs = listaPeca.map(f => f.func === 'FURO' ? null : pecaTraj(f, r, gx, gy));
+        const pts = [];
+        listaPeca.forEach((f, i) => {
+            if (f.func === 'FURO') pts.push({x: f.cx - f.d / 2, y: f.cy - f.d / 2}, {x: f.cx + f.d / 2, y: f.cy + f.d / 2});
+            else {
+                pecaPoli(f).forEach(p => pts.push(p));
+                const t = trs[i];
+                if (t && !t.erro) { t.L.forEach(p => pts.push(p)); pts.push(t.E); }
+            }
+        });
+        if (!pts.length) return;
+        const x0 = Math.min(...pts.map(p => p.x)), x1 = Math.max(...pts.map(p => p.x));
+        const y0 = Math.min(...pts.map(p => p.y)), y1 = Math.max(...pts.map(p => p.y));
+        const esc = Math.min((W - 40) / ((x1 - x0) || 1), (H - 40) / ((y1 - y0) || 1));
+        const tx = x => (W - (x1 - x0) * esc) / 2 + (x - x0) * esc, ty = y => H - (H - (y1 - y0) * esc) / 2 - (y - y0) * esc;
+        const cor = {EXT: '#a6e3a1', CAV: '#ffb86c', FURO: '#ff5555'};
+        listaPeca.forEach(f => {
+            c.globalAlpha = f.usar === false ? 0.3 : 1;
+            c.strokeStyle = cor[f.func]; c.lineWidth = 2; c.beginPath();
+            if (f.func === 'FURO') c.arc(tx(f.cx), ty(f.cy), Math.max(2, f.d / 2 * esc), 0, 2 * Math.PI);
+            else pecaPoli(f).forEach((p, i) => i ? c.lineTo(tx(p.x), ty(p.y)) : c.moveTo(tx(p.x), ty(p.y)));
+            if (f.func !== 'FURO') c.closePath();
+            c.stroke();
+        });
+        // linha por onde passa o centro da ferramenta (tracejada), ponto de início e entrada
+        listaPeca.forEach((f, i) => {
+            const t = trs[i];
+            if (!t || t.erro || f.usar === false) return;
+            c.globalAlpha = 1;
+            c.strokeStyle = '#00adb5'; c.lineWidth = 1; c.setLineDash([4, 3]); c.beginPath();
+            t.L.forEach((p, k) => k ? c.lineTo(tx(p.x), ty(p.y)) : c.moveTo(tx(p.x), ty(p.y)));
+            c.closePath(); c.stroke(); c.setLineDash([]);
+            if (Math.hypot(t.E.x - t.L[0].x, t.E.y - t.L[0].y) > 1e-6) {
+                c.strokeStyle = '#f9e2af'; c.beginPath(); c.moveTo(tx(t.E.x), ty(t.E.y)); c.lineTo(tx(t.L[0].x), ty(t.L[0].y)); c.stroke();
+                c.strokeRect(tx(t.E.x) - 3, ty(t.E.y) - 3, 6, 6);
+            }
+            c.fillStyle = '#f9e2af'; c.beginPath(); c.arc(tx(t.L[0].x), ty(t.L[0].y), 3.5, 0, 2 * Math.PI); c.fill();
+        });
+        c.globalAlpha = 1;
+        c.strokeStyle = '#00adb5'; c.lineWidth = 1; c.beginPath();
+        c.moveTo(tx(0) - 8, ty(0)); c.lineTo(tx(0) + 8, ty(0)); c.moveTo(tx(0), ty(0) - 8); c.lineTo(tx(0), ty(0) + 8); c.stroke();
+    }
+
     window.onload = function() {
+        pecaCampos();
+        renderizarPeca();
         renderizarListaOrdemTarefas();
         renderizarTabelaFaceamentos();
         renderizarTabelaCavidades();
